@@ -7,6 +7,7 @@ import { IOpenOrder, ISymbol } from "../../interface";
 import variables from "../../api/variable";
 import { inflate } from "pako";
 import { toast } from "react-toastify";
+import allSymbolData from "../../utils/allSymbol";
 
 let ws: any;
 let preSymbol: any = null;
@@ -214,9 +215,10 @@ const Home = () => {
     );
   };
 
-  const allSymbol = JSON.parse(localStorage.getItem(STORE_KEYS?.ALL_SYMBOL) || "[]");
-  
-
+  const allSymbol = localStorage.getItem(STORE_KEYS?.ALL_SYMBOL)
+    ? JSON.parse(localStorage.getItem(STORE_KEYS?.ALL_SYMBOL) || "[]")
+    : allSymbolData;
+    
   const searchedSymbol =
     searchValue !== "" ? allSymbol?.filter((it: ISymbol) => it?.symbol?.includes(searchValue)) : [];
 
