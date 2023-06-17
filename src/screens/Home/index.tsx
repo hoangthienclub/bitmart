@@ -83,7 +83,7 @@ const Home = () => {
   );
 
   const { isLoading: isBuying, mutate: _onBuyOrder } = useMutation(["buyOrder"], API.buyOrder, {
-    onSuccess: (data, params) => {
+    onSuccess: (data) => {
       if (data?.data?.status === "error") {
         toast(data?.data?.["err-msg"]);
       } else {
