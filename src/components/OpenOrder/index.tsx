@@ -1,4 +1,5 @@
 import { IOpenOrder } from "../../interface";
+import { formatNumber } from "../../utils/helper";
 import Empty from "../svg/Empty";
 import moment from 'moment'
 
@@ -29,16 +30,31 @@ const OpenOrders = ({ data = [] }: { label?: string, data?: IOpenOrder[] }) => {
                     {sortedData?.map((it: IOpenOrder, key: number) => {
                         const { side, price, amount } = it ?? {}
                         return (
-
-                            <tr key={key} className="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
-                                <td
-                                    className={`px-6 py-4 ${side === 'buy' ? 'text-green-500' : 'text-red-500'} font-medium text-gray-900 whitespace-nowrap dark:text-white`}>
-                                    {price}
-                                </td>
-                                <td className={`px-6 py-4 ${side === 'buy' ? 'text-green-500' : 'text-red-500'}`}>{amount}</td>
-                                <td className={`px-6 py-4 ${side === 'buy' ? 'text-green-500' : 'text-red-500'}`}>{it?.['created-at'] ? moment.unix(it?.['created-at']).format('hh:mm;ss') : ''}</td>
-                            </tr>
-                        )
+                          <tr
+                            key={key}
+                            className="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
+                            <td
+                              className={`px-6 py-4 ${
+                                side === "buy" ? "text-green-500" : "text-red-500"
+                              } font-medium text-gray-900 whitespace-nowrap dark:text-white`}>
+                              {formatNumber(price)}
+                            </td>
+                            <td
+                              className={`px-6 py-4 ${
+                                side === "buy" ? "text-green-500" : "text-red-500"
+                              }`}>
+                              {formatNumber(amount)}
+                            </td>
+                            <td
+                              className={`px-6 py-4 ${
+                                side === "buy" ? "text-green-500" : "text-red-500"
+                              }`}>
+                              {it?.["created-at"]
+                                ? moment.unix(it?.["created-at"]).format("hh:mm;ss")
+                                : ""}
+                            </td>
+                          </tr>
+                        );
                     })
                     }
                 </tbody>

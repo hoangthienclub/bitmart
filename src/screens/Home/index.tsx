@@ -12,7 +12,7 @@ let ws: any;
 let preSymbol: any = null;
 
 const Home = () => {
-  const [allSymbol, setAllSymbol] = useState<ISymbol[]>([]);
+  // const [allSymbol, setAllSymbol] = useState<ISymbol[]>([]);
   const [searchValue, setSearchValue] = useState("");
   const [selectedSymbol, setSelectedSymbol] = useState<ISymbol>();
   const [ordersBook, setOrdersBook] = useState({});
@@ -60,14 +60,14 @@ const Home = () => {
     ["getUserInfo"],
     API.getUserInfo,
     {
-      onSuccess: (data) => {
+      onSuccess: (data, params) => {
         console.log("data", data);
 
         if (data?.data?.status === "error") {
           toast(data?.data?.["err-msg"]);
         } else {
-          sessionStorage.setItem(STORE_KEYS.accessKeyId, userInfo?.accessKey);
-          sessionStorage.setItem(STORE_KEYS.secretKey, userInfo?.secretKey);
+          sessionStorage.setItem(STORE_KEYS.accessKeyId, params?.accessKey);
+          sessionStorage.setItem(STORE_KEYS.secretKey, params?.secretKey);
           setUserId(data?.data?.data?.[0]?.id);
         }
       },
@@ -90,10 +90,7 @@ const Home = () => {
     }
   );
 
-  const { mutateAsync: onGetOpenOrder, } = useMutation(
-    "getOpenOrder",
-    API.getOpenOrder
-  );
+  const { mutateAsync: onGetOpenOrder } = useMutation("getOpenOrder", API.getOpenOrder);
 
   const getOpenOrder = async () => {
     const buys = onGetOpenOrder({
@@ -115,8 +112,9 @@ const Home = () => {
   };
 
   const {} = useQuery(["getAllSymbol"], () => API.getAllSymbol(), {
-    onSuccess: (data) => setAllSymbol(data?.data?.data),
-    enabled: !!userId
+    onSuccess: (data) =>
+      localStorage.setItem(STORE_KEYS?.ALL_SYMBOL, JSON.stringify(data?.data?.data)),
+    enabled: !!userId,
   });
 
   const onLogout = () => {
@@ -199,8 +197,11 @@ const Home = () => {
     );
   };
 
+  const allSymbol = JSON.parse(localStorage.getItem(STORE_KEYS?.ALL_SYMBOL) || "[]");
+  
+
   const searchedSymbol =
-    searchValue !== "" ? allSymbol.filter((it: ISymbol) => it?.symbol?.includes(searchValue)) : [];
+    searchValue !== "" ? allSymbol?.filter((it: ISymbol) => it?.symbol?.includes(searchValue)) : [];
 
   const onSelectSymbol = (it: ISymbol) => {
     preSymbol = selectedSymbol;

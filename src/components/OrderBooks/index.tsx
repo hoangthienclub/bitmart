@@ -1,3 +1,4 @@
+import { formatNumber } from "../../utils/helper";
 import Empty from "../svg/Empty";
 import './OrderBooks.scss'
 const OrderBooks = ({ label = 'Orders Book', data }: { label?: string, data?: any }) => {
@@ -35,24 +36,29 @@ const OrderBooks = ({ label = 'Orders Book', data }: { label?: string, data?: an
                 <tbody>
                     {bids?.map((it: any, index: number) => {
                         return (
-
-                            <tr key={index} className="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
-                                <th
-                                    scope="row"
-                                    className="px-6 py-4 text-green-500 font-medium  whitespace-nowrap">
-                                    { }
-                                </th>
-                                <th
-                                    scope="row"
-                                    className="px-6 py-4 font-medium text-green-500 whitespace-nowrap">
-                                    {it?.[1]}
-                                </th>
-                                <td className="py-4 text-green-500 pl-6 pr-2 text-end">{it?.[0]}</td>
-                                <td className="py-4 text-red-500 pr-6 pl-2 text-start">{asks?.[index]?.[0]}</td>
-                                <td className="px-6 py-4 text-red-500">{asks?.[index]?.[1]}</td>
-                                <td className="px-6 py-4 text-red-500"></td>
-                            </tr>
-                        )
+                          <tr
+                            key={index}
+                            className="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
+                            <th
+                              scope="row"
+                              className="px-6 py-4 text-green-500 font-medium  whitespace-nowrap"></th>
+                            <th
+                              scope="row"
+                              className="px-6 py-4 font-medium text-green-500 whitespace-nowrap">
+                              {formatNumber(it?.[1])}
+                            </th>
+                            <td className="py-4 text-green-500 pl-6 pr-2 text-end">
+                              {formatNumber(it?.[0])}
+                            </td>
+                            <td className="py-4 text-red-500 pr-6 pl-2 text-start">
+                              {formatNumber(asks?.[index]?.[0])}
+                            </td>
+                            <td className="px-6 py-4 text-red-500">
+                              {formatNumber(asks?.[index]?.[1])}
+                            </td>
+                            <td className="px-6 py-4 text-red-500"></td>
+                          </tr>
+                        );
                     })
                     }
                 </tbody>

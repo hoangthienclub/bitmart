@@ -1,4 +1,5 @@
 import { IHistoryOrder } from "../../interface";
+import { formatNumber } from "../../utils/helper";
 import Empty from "../svg/Empty";
 import moment from 'moment'
 
@@ -33,9 +34,9 @@ const HistoryOrder = ({ data = [] }: { label?: string, data?: IHistoryOrder[] })
 
                             <tr key={key} className="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
                                 
-                                <td className={`px-6 py-4 `}>{it?.['transact-amt']}</td>
-                                <td className={`px-6 py-4 `}>{it?.['avail-balance']}</td>
-                                <td className={`px-6 py-4 `}>{it?.['acct-balance']}</td>
+                                <td className={`px-6 py-4 `}>{formatNumber(it?.['transact-amt'])}</td>
+                                <td className={`px-6 py-4 `}>{formatNumber(it?.['avail-balance'])}</td>
+                                <td className={`px-6 py-4 `}>{formatNumber(it?.['acct-balance'])}</td>
                                 <td className={`px-6 py-4 `}>{it?.['transact-time'] ? moment.unix(it?.['transact-time']).format('hh:mm;ss') : ''}</td>
                             
                             </tr>
