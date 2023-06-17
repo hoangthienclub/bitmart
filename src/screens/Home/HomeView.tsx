@@ -34,36 +34,34 @@ const HomeView = ({
   onLogin,
   onLoadingLogin,
   onLogout,
-  userBalance
+  userBalance,
+  onBuy,
+  buyForm,
+  setBuyForm,
+  createVolumeForm,
+  setCreateVolumeForm,
+  isBuying = false,
 }: any) => {
   const [tabActive, setTabActive]: any = useState(TAB_ITEMS[0]?.key);
-  const [buyForm, setBuyForm] = useState({
-    price: "0",
-    amount: "0",
-  });
-
-  const [createVolumeForm, setCreateVolumeForm] = useState({
-    min: "0",
-    max: "0",
-    amount: "0",
-  });
 
   const renderBuyForm = () => {
     return (
       <>
         <div className="flex flex-row flex-1 gap-4 my-4">
           <Input
+            type="number"
             value={buyForm?.price}
             onChange={(e: any) => setBuyForm({ ...buyForm, price: e?.target?.value })}
             label="Price"
           />
           <Input
+            type="number"
             value={buyForm?.amount}
             onChange={(e: any) => setBuyForm({ ...buyForm, amount: e?.target?.value })}
             label="Amount"
           />
         </div>
-        <Button title={"Submit"} onClick={() => {}} />
+        <Button title={"Submit"} loading={isBuying} disabled={isBuying}  onClick={onBuy} />
       </>
     );
   };

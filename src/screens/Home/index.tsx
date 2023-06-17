@@ -12,7 +12,6 @@ let ws: any;
 let preSymbol: any = null;
 
 const Home = () => {
-  // const [allSymbol, setAllSymbol] = useState<ISymbol[]>([]);
   const [searchValue, setSearchValue] = useState("");
   const [selectedSymbol, setSelectedSymbol] = useState<ISymbol>();
   const [ordersBook, setOrdersBook] = useState({});
@@ -26,6 +25,17 @@ const Home = () => {
     initSocket();
     getUserInfo();
   }, []);
+
+  const [buyForm, setBuyForm] = useState({
+    price: 0,
+    amount: 0,
+  });
+
+  const [createVolumeForm, setCreateVolumeForm] = useState({
+    min: 0,
+    max: 0,
+    amount: 0,
+  });
 
   const getUserInfo = () => {
     const accessKeyId = sessionStorage.getItem(STORE_KEYS.accessKeyId);
@@ -61,8 +71,6 @@ const Home = () => {
     API.getUserInfo,
     {
       onSuccess: (data, params) => {
-        console.log("data", data);
-
         if (data?.data?.status === "error") {
           toast(data?.data?.["err-msg"]);
         } else {
@@ -73,6 +81,16 @@ const Home = () => {
       },
     }
   );
+
+  const { isLoading: isBuying, mutate: _onBuyOrder } = useMutation(["buyOrder"], API.buyOrder, {
+    onSuccess: (data, params) => {
+      if (data?.data?.status === "error") {
+        toast(data?.data?.["err-msg"]);
+      } else {
+        getOpenOrder();
+      }
+    },
+  });
 
   const onLogin = () => {
     _onLogin({ accessKey: userInfo?.accessKey, secretKey: userInfo?.secretKey });
@@ -129,7 +147,6 @@ const Home = () => {
   const initSocket = () => {
     ws = new WebSocket(variables.WS_URL);
     ws.onopen = function open() {};
-    // unsubscribe(ws);
     ws.onmessage = function (data: any) {
       const fileReader = new FileReader();
       fileReader.onload = function (event: any) {
@@ -208,6 +225,15 @@ const Home = () => {
     setSelectedSymbol(it);
   };
 
+  const onBuy = () => {
+    _onBuyOrder({
+      symbol: selectedSymbol?.symbol,
+      price: buyForm?.price,
+      amount: buyForm.amount,
+      "account-id": userId?.toString(),
+    });
+  };
+
   return (
     <HomeView
       {...{
@@ -225,6 +251,12 @@ const Home = () => {
         onLoadingLogin,
         onLogout,
         userBalance: userBalance?.data?.data?.list?.filter((it: any) => +it?.balance > 0),
+        buyForm,
+        setBuyForm,
+        createVolumeForm,
+        setCreateVolumeForm,
+        onBuy,
+        isBuying,
       }}
     />
   );

@@ -20,13 +20,18 @@ const getAccountBalance = (userId:string) => {
     return baseApi({ url: `${apis.accountInfo}/${userId}/balance` })
 }
 
+const buyOrder = (params: any) => {
+  return baseApi({ url: apis.buy, method: "post", params: { ...params, type: "buy-limit" } });
+};
+
 
 const API = {
     getAllSymbol,
     getUserInfo,
     getHistoryOrder,
     getOpenOrder,
-    getAccountBalance
+    getAccountBalance,
+    buyOrder
 }
 
 export default API

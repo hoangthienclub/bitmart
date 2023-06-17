@@ -7,6 +7,9 @@ import STORE_KEYS from '../utils/constant';
 
 const getApiUrl = (url: any, parameters: any, secretKey?: string) => {
     const secretKeyParam = secretKey ?? sessionStorage.getItem(STORE_KEYS.secretKey);
+
+    console.log("secretKeyParam", secretKeyParam);
+    
     const { method, host } = variables ?? {}
     const encoded_parameters = querystring.stringify(parameters,).replace(/\+/g, '%20').replace(/\:/g, '%3A');
     const sorted_parameters = encoded_parameters.split('&').sort().join('&');

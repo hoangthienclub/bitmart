@@ -1,6 +1,7 @@
 
 import ProfileIc from '../svg/Profile'
 import MemoLogout from '../svg/Logout'
+import { formatNumber } from '../../utils/helper';
 
 const Profile = ({
   userId,
@@ -20,7 +21,7 @@ const Profile = ({
 
         {balance && (
           <div className="flex flex-1">
-            <span className="pl-2 pr-[1px]"> - {balance?.balance} </span>
+            <span className="pl-2 pr-[1px]"> - {formatNumber(balance?.balance)} </span>
             <span>{balance?.currency}</span>
           </div>
         )}

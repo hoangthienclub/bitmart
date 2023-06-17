@@ -6,7 +6,7 @@ const apis = {
     orderHistory: '/v1/order/history',
     allSymbol: '/v1/common/symbols',
     accountInfo: '/v1/account/accounts',
-    buy: "",
+    buy: "/v1/order/orders/place",
     sell: "",
 }
 const method = 'GET';
