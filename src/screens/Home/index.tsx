@@ -87,10 +87,16 @@ const Home = () => {
     API.getUserInfo,
     {
       onSuccess: async (data, params) => {
+        console.log("data", data);
+        
         if (data?.data?.status === "error") {
           toast(data?.data?.["err-msg"]);
         } else {
-          const balances = await getBalanceInfo(data?.data?.data?.[0]?.id);
+          const balances = await getBalanceInfo({
+            userId: data?.data?.data?.[0]?.id,
+            accessKey: params?.accessKey,
+            secretKey: params?.secretKey,
+          });
           if (params?.type === "buyer") {
             setBuyer({
               ...buyer,
@@ -324,6 +330,12 @@ const Home = () => {
       orderId: id,
     });
   };
+
+  const onSelectUser = (userInfo: any) => {
+    sessionStorage.setItem(STORE_KEYS.accessKeyId, userInfo?.accessKey);
+    sessionStorage.setItem(STORE_KEYS.secretKey, userInfo?.secretKey);
+    setUserId(userInfo?.userId);
+  };
   
   return (
     <HomeView
@@ -375,7 +387,7 @@ const Home = () => {
         seller,
         setSeller,
         selectedSymbol,
-        onSelectUser: (id: string) => setUserId(id),
+        onSelectUser,
       }}
     />
   );

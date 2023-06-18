@@ -13,7 +13,11 @@ const getUserInfo = ({
   secretKey: string;
   type: string;
 }) => {
-  return baseApi({ url: apis.accountInfo, params: { AccessKeyId: accessKey, secretKey } });
+  return baseApi({
+    url: apis.accountInfo,
+    params: { AccessKeyId: accessKey, secretKey },
+    isLogin: true,
+  });
 };
 
 const getHistoryOrder = (params: any) => {
@@ -23,9 +27,21 @@ const getOpenOrder = (params: any) => {
     return baseApi({ url: apis.openOrders, params })
 }
 
-const getAccountBalance = (userId:string) => {
-    return baseApi({ url: `${apis.accountInfo}/${userId}/balance` })
-}
+const getAccountBalance = ({
+  userId,
+  accessKey,
+  secretKey,
+}: {
+  userId: string;
+  accessKey: string;
+  secretKey: string;
+}) => {
+  return baseApi({
+    url: `${apis.accountInfo}/${userId}/balance`,
+    params: { AccessKeyId: accessKey, secretKey },
+    isLogin: true,
+  });
+};
 
 const buyOrder = (params: any) => {
   return baseApi({ url: apis.buy, method: "POST", params: { ...params, type: "buy-limit" } });

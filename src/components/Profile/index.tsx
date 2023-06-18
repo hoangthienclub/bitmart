@@ -36,21 +36,26 @@ const Profile = ({
         it?.type === "trade"
     );
 
-  const renderUserInfo = ({ label, balances, userId }: any) => {
+  const renderUserInfo = ({ label, balances, userInfo }: any) => {
     return (
       <div
         className={`flex flex-row mx-2 cursor-pointer ${
-          selectedUser === userId ? "bg-blue-800 rounded-md p-2" : ""
+          selectedUser === userInfo?.userId ? "bg-blue-800 rounded-md p-2" : ""
         }`}
-        onClick={() => onSelectUser(userId)}>
+        onClick={() => onSelectUser(userInfo)}>
         <ProfileIc className="mx-2" />
-        <div className="mr-2">{label}</div>(
-        {balances?.map((balance: any) => (
-          <div className="mr-2">
-            {formatNumber(balance?.balance)} {balance?.currency}
+        <div className="mr-2">{label}</div>
+        {balances && (
+          <div className="flex">
+            (
+            {balances?.map((balance: any) => (
+              <div className="mr-2">
+                {formatNumber(balance?.balance)} {balance?.currency}
+              </div>
+            ))}
+            )
           </div>
-        ))}
-        )
+        )}
       </div>
     );
   };
@@ -58,12 +63,12 @@ const Profile = ({
   return (
     <div className="flex flex-row justify-center items-center">
       {buyer?.userId &&
-        renderUserInfo({ label: "Buyer", balances: selectedBuyerBalance, userId: buyer?.userId })}
+        renderUserInfo({ label: "Buyer", balances: selectedBuyerBalance, userInfo: buyer })}
       {seller?.userId &&
         renderUserInfo({
           label: "Seller",
           balances: selectedSellerBalance,
-          userId: seller?.userId,
+          userInfo: seller,
         })}
       <MemoLogout onClick={onLogout} className="cursor-pointer ml-2 w-5 h-5" />
     </div>

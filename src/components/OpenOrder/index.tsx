@@ -10,7 +10,6 @@ const OpenOrders = ({
 }: {
   label?: string;
   data?: IOpenOrder[];
-  selectedSymbol: ISymbol;
   cancelOrder: (id: string | number) => void;
 }) => {
   const sortedData = data?.sort(
