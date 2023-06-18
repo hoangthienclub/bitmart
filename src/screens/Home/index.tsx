@@ -1,9 +1,9 @@
-import { useEffect, useState } from "react";
+import { memo, useEffect, useState } from "react";
 import HomeView from "./HomeView";
 import STORE_KEYS from "../../utils/constant";
 import { useMutation, useQuery } from "react-query";
 import API from "../../api/api";
-import { IOpenOrder, ISymbol } from "../../interface";
+import { ISymbol } from "../../interface";
 import variables from "../../api/variable";
 import { inflate } from "pako";
 import { toast } from "react-toastify";
@@ -12,21 +12,33 @@ import allSymbolData from "../../utils/allSymbol";
 let ws: any;
 let preSymbol: any = null;
 
+const defaultUserInfo = {
+  accessKey: "",
+  secretKey: "",
+  userId: "",
+  balances: [],
+};
+
 const Home = () => {
   const [searchValue, setSearchValue] = useState("");
   const [selectedSymbol, setSelectedSymbol] = useState<ISymbol>();
   const [ordersBook, setOrdersBook] = useState({});
+  const [buyer, setBuyer] = useState({ ...defaultUserInfo });
+  const [seller, setSeller] = useState({ ...defaultUserInfo });
   const [userId, setUserId] = useState("");
-  const [userInfo, setUserInfo] = useState<{ accessKey: string; secretKey: string }>({
-    accessKey: "",
-    secretKey: "",
-  });
   useEffect(() => {
+    console.log('12312312312');
+    
     initSocket();
     getUserInfo();
   }, []);
 
   const [buyForm, setBuyForm] = useState({
+    price: 0,
+    amount: 0,
+  });
+
+  const [sellForm, setSellForm] = useState({
     price: 0,
     amount: 0,
   });
@@ -38,10 +50,17 @@ const Home = () => {
   });
 
   const getUserInfo = () => {
-    const accessKeyId = sessionStorage.getItem(STORE_KEYS.accessKeyId);
-    const secretKey = sessionStorage.getItem(STORE_KEYS.secretKey);
-    if (accessKeyId && secretKey) {
-      _onLogin({ accessKey: accessKeyId, secretKey: secretKey });
+    console.log("getUserInfo==========>", getUserInfo);
+    
+    const buyer = JSON.parse(sessionStorage.getItem(STORE_KEYS.BUYER) || "{}");
+    const seller = JSON.parse(sessionStorage.getItem(STORE_KEYS.SELLER) || "{}");
+
+    // const secretKey = sessionStorage.getItem(STORE_KEYS.secretKey);
+    if (buyer?.userId) {
+      _onLogin({ accessKey: buyer?.accessKey, secretKey: buyer?.secretKey, type: "buyer" });
+    }
+    if (seller?.userId) {
+      _onLogin({ accessKey: seller?.accessKey, secretKey: seller?.secretKey, type: "seller" });
     }
   };
 
@@ -52,52 +71,106 @@ const Home = () => {
     }
   }, [selectedSymbol]);
 
-  // useEffect(() => {
-  //   if (userId) {
-  //     getOpenOrder();
-  //   }
-  // }, [userId, selectedSymbol]);
-
-  const { data: userBalance } = useQuery(
-    ["getAccountBalance", { userId }],
-    () => API.getAccountBalance(userId),
-    {
-      enabled: !!userId,
+  useEffect(() => {
+    if (userId) {
+      refetchOrders();
     }
+  }, [userId]);
+
+  const { data: userBalance, mutateAsync: getBalanceInfo } = useMutation(
+    ["getAccountBalance"],
+    API.getAccountBalance
   );
 
   const { isLoading: onLoadingLogin, mutate: _onLogin } = useMutation(
     ["getUserInfo"],
     API.getUserInfo,
     {
-      onSuccess: (data, params) => {
+      onSuccess: async (data, params) => {
         if (data?.data?.status === "error") {
           toast(data?.data?.["err-msg"]);
         } else {
-          sessionStorage.setItem(STORE_KEYS.accessKeyId, params?.accessKey);
-          sessionStorage.setItem(STORE_KEYS.secretKey, params?.secretKey);
-          setUserId(data?.data?.data?.[0]?.id);
+          const balances = await getBalanceInfo(data?.data?.data?.[0]?.id);
+          if (params?.type === "buyer") {
+            setBuyer({
+              ...buyer,
+              ...params,
+              userId: data?.data?.data?.[0]?.id,
+              balances: balances?.data?.data?.list,
+            });
+            sessionStorage.setItem(
+              STORE_KEYS.BUYER,
+              JSON.stringify({
+                ...buyer,
+                ...params,
+                userId: data?.data?.data?.[0]?.id,
+                balances: balances?.data?.data?.list,
+              })
+            );
+          }
+          if (params?.type === "seller") {
+            setSeller({
+              ...seller,
+              ...params,
+              userId: data?.data?.data?.[0]?.id,
+              balances: balances?.data?.data?.list,
+            });
+            sessionStorage.setItem(
+              STORE_KEYS.SELLER,
+              JSON.stringify({
+                ...seller,
+                ...params,
+                userId: data?.data?.data?.[0]?.id,
+                balances: balances?.data?.data?.list,
+              })
+            );
+          }
+
+          // sessionStorage.setItem(STORE_KEYS.accessKeyId, params?.accessKey);
+          // sessionStorage.setItem(STORE_KEYS.secretKey, params?.secretKey);
+          // setUserId(data?.data?.data?.[0]?.id);
         }
       },
     }
   );
+
+  const refetchOrders = () => {
+    refetchGetOpenOrder();
+    refetchGetHistoryOrder();
+  };
 
   const { isLoading: isBuying, mutate: _onBuyOrder } = useMutation(["buyOrder"], API.buyOrder, {
     onSuccess: (data) => {
       if (data?.data?.status === "error") {
         toast(data?.data?.["err-msg"]);
       } else {
-        refetchGetOpenOrder();
+        refetchOrders();
       }
     },
   });
 
-  const onLogin = () => {
-    _onLogin({ accessKey: userInfo?.accessKey, secretKey: userInfo?.secretKey });
-  };
+  const { isLoading: isSelling, mutate: _onSellOrder } = useMutation(["sellOrder"], API.buyOrder, {
+    onSuccess: (data) => {
+      if (data?.data?.status === "error") {
+        toast(data?.data?.["err-msg"]);
+      } else {
+        refetchOrders();
+      }
+    },
+  });
 
-  const { data: historyOrder } = useQuery(
-    ["getHistoryOrder", { userId, symbol: selectedSymbol?.symbol }],
+  const { mutate: _onCancelOrder } = useMutation(["cancelOrder"], API.cancelOrder, {
+    onSuccess: (data) => {
+      if (data?.data?.status === "error") {
+        toast(data?.data?.["err-msg"]);
+      } else {
+        refetchOrders();
+      }
+    },
+  });
+
+  const { data: historyOrder, refetch: refetchGetHistoryOrder } = useQuery(
+    ["getHistoryOrder", { userId }],
     () =>
       API.getHistoryOrder({
         "account-id": userId,
@@ -109,7 +182,8 @@ const Home = () => {
 
   const { data: openOrder, refetch: refetchGetOpenOrder } = useQuery(
     ["getOpenOrder", { userId }],
-    () => API.getOpenOrder({ "account-id": userId })
+    () => API.getOpenOrder({ "account-id": userId }),
+    { enabled: !!userId }
   );
 
   // const getOpenOrder = async () => {
@@ -140,10 +214,8 @@ const Home = () => {
   const onLogout = () => {
     setUserId("");
     sessionStorage.clear();
-    setUserInfo({
-      accessKey: "",
-      secretKey: "",
-    });
+    setBuyer({ ...defaultUserInfo });
+    setSeller({ ...defaultUserInfo });
   };
 
   const initSocket = () => {
@@ -219,7 +291,7 @@ const Home = () => {
   const allSymbol = localStorage.getItem(STORE_KEYS?.ALL_SYMBOL)
     ? JSON.parse(localStorage.getItem(STORE_KEYS?.ALL_SYMBOL) || "[]")
     : allSymbolData;
-    
+
   const searchedSymbol =
     searchValue !== "" ? allSymbol?.filter((it: ISymbol) => it?.symbol?.includes(searchValue)) : [];
 
@@ -234,11 +306,25 @@ const Home = () => {
       price: buyForm?.price,
       amount: buyForm.amount,
       "account-id": userId?.toString(),
-      // "client-order-id": "a0001",
-      // source: "spot-api",
     });
   };
 
+  const onSell = () => {
+    _onSellOrder({
+      symbol: selectedSymbol?.symbol,
+      price: buyForm?.price,
+      amount: buyForm.amount,
+      "account-id": userId?.toString(),
+    });
+  };
+
+  const cancelOrder = (id: string) => {
+    _onCancelOrder({
+      symbol: selectedSymbol?.symbol as string,
+      orderId: id,
+    });
+  };
+  
   return (
     <HomeView
       {...{
@@ -248,23 +334,51 @@ const Home = () => {
         onSelectSymbol,
         ordersBook,
         openOrders: openOrder?.data?.data,
+        // openOrders: [
+        //   {
+        //     symbol: "apnusdt",
+        //     source: "web",
+        //     price: "1.555550000000000000",
+        //     "created-at": 1630633835224,
+        //     amount: "572.330000000000000000",
+        //     "account-id": 13496526,
+        //     "filled-cash-amount": "0.0",
+        //     "client-order-id": "",
+        //     "filled-amount": "0.0",
+        //     "filled-fees": "0.0",`
+        //     id: 357630527817871,
+        //     state: "submitted",
+        //     type: "sell-limit",
+        //   },
+        // ],
         historyOrder: historyOrder?.data?.data,
         userId,
-        userInfo,
-        setUserInfo,
-        onLogin,
+        // userInfo,
+        // setUserInfo,
+        onLogin: _onLogin,
         onLoadingLogin,
         onLogout,
-        userBalance: userBalance?.data?.data?.list?.filter((it: any) => +it?.balance > 0),
+        // userBalance: userBalance?.data?.data?.list?.filter((it: any) => +it?.balance > 0),
         buyForm,
         setBuyForm,
         createVolumeForm,
         setCreateVolumeForm,
         onBuy,
         isBuying,
+        sellForm,
+        setSellForm,
+        onSell,
+        isSelling,
+        cancelOrder,
+        buyer,
+        setBuyer,
+        seller,
+        setSeller,
+        selectedSymbol,
+        onSelectUser: (id: string) => setUserId(id),
       }}
     />
   );
 };
 
-export default Home;
+export default memo(Home);

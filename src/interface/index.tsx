@@ -36,7 +36,7 @@ export interface IOpenOrder {
   "client-order-id": string;
   "filled-amount": string;
   "filled-fees": string;
-  id: number;
+  id: number | string;
   state: string;
   type: "sell-limit" | "buy-limit";
 }

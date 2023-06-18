@@ -1,33 +1,73 @@
 import ProfileIc from "../svg/Profile";
 import MemoLogout from "../svg/Logout";
 import { formatNumber } from "../../utils/helper";
+import { ISymbol } from "../../interface";
 
 const Profile = ({
-  userId,
+  buyer,
+  seller,
   onLogout,
-  userBalance = [],
+  symbol,
+  onSelectUser,
+  selectedUser,
 }: {
-  userId: string;
+  buyer: any;
+  seller: any;
+  symbol: ISymbol;
   onLogout: () => void;
-  userBalance: any;
+  onSelectUser: (id: string) => void;
+  selectedUser: string;
 }) => {
-  const balance = userBalance?.[0];
-  if (userId)
+  const { balances: sellerBalances } = seller ?? {};
+  const { balances: buyerBalances } = buyer ?? {};
+
+  const selectedSellerBalance =
+    symbol &&
+    sellerBalances?.filter(
+      (it: any) =>
+        [symbol?.["base-currency"], symbol?.["quote-currency"]]?.includes(it?.currency) &&
+        it?.type === "trade"
+    );
+  const selectedBuyerBalance =
+    symbol &&
+    buyerBalances?.filter(
+      (it: any) =>
+        [symbol?.["base-currency"], symbol?.["quote-currency"]]?.includes(it?.currency) &&
+        it?.type === "trade"
+    );
+
+  const renderUserInfo = ({ label, balances, userId }: any) => {
     return (
-      <div className="flex flex-row justify-center items-center">
+      <div
+        className={`flex flex-row mx-2 cursor-pointer ${
+          selectedUser === userId ? "bg-blue-800 rounded-md p-2" : ""
+        }`}
+        onClick={() => onSelectUser(userId)}>
         <ProfileIc className="mx-2" />
-        <span>{userId}</span>
-
-        {balance && (
-          <div className="flex flex-1">
-            <span className="pl-2 pr-[1px]"> - {formatNumber(balance?.balance)} </span>
-            <span>{balance?.currency}</span>
+        <div className="mr-2">{label}</div>(
+        {balances?.map((balance: any) => (
+          <div className="mr-2">
+            {formatNumber(balance?.balance)} {balance?.currency}
           </div>
-        )}
-
-        <MemoLogout onClick={onLogout} className="cursor-pointer ml-2 w-5 h-5" />
+        ))}
+        )
       </div>
     );
+  };
+
+  return (
+    <div className="flex flex-row justify-center items-center">
+      {buyer?.userId &&
+        renderUserInfo({ label: "Buyer", balances: selectedBuyerBalance, userId: buyer?.userId })}
+      {seller?.userId &&
+        renderUserInfo({
+          label: "Seller",
+          balances: selectedSellerBalance,
+          userId: seller?.userId,
+        })}
+      <MemoLogout onClick={onLogout} className="cursor-pointer ml-2 w-5 h-5" />
+    </div>
+  );
 };
 
 export default Profile;

@@ -2,13 +2,14 @@ import moment from "moment";
 
 const host = 'api.huobi.pro';
 const apis = {
-    openOrders: '/v1/order/openOrders',
-    orderHistory: '/v1/order/history',
-    allSymbol: '/v1/common/symbols',
-    accountInfo: '/v1/account/accounts',
-    buy: "/v1/order/orders/place",
-    sell: "",
-}
+  openOrders: "/v1/order/openOrders",
+  orderHistory: "/v1/order/history",
+  allSymbol: "/v1/common/symbols",
+  accountInfo: "/v1/account/accounts",
+  buy: "/v1/order/orders/place",
+  sell: "",
+  cancel: (orderId: string) => `/v1/order/orders/${orderId}/submitcancel`,
+};
 const method = 'GET';
 
 const timestamp = moment().utc().format('YYYY-MM-DDTHH:mm:ss');

@@ -7,7 +7,7 @@ import STORE_KEYS from "../utils/constant";
 const getApiUrl = (url: any, parameters: any, secretKey?: string, method = "GET") => {
   const secretKeyParam = secretKey ?? sessionStorage.getItem(STORE_KEYS.secretKey);
   const { host } = variables ?? {};
-  const encoded_parameters = querystring.stringify(parameters);
+  const encoded_parameters = querystring.stringify(parameters).replace(/\+/g, '%20').replace(/\:/g, '%3A');
   const sorted_parameters = encoded_parameters.split("&").sort().join("&");
   const string_to_sign = `${method}\n${host.toLowerCase()}\n${url}\n${sorted_parameters}`;
   const signature = cryptoJS

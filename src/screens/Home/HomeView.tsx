@@ -8,12 +8,17 @@ import OrderBooks from "../../components/OrderBooks";
 import OpenOrders from "../../components/OpenOrder";
 import HistoryOrder from "../../components/HistoryOrder";
 import Profile from "../../components/Profile";
-import Balance from "../../components/Balance";
+// import Balance from "../../components/Balance";
+import LoginForm from "../../components/LoginForm";
 
-const TAB_ITEMS = [
+export const TAB_ITEMS = [
   {
     key: 0,
     label: "Buy",
+  },
+  {
+    key: 2,
+    label: "Sell",
   },
   {
     key: 1,
@@ -35,13 +40,24 @@ const HomeView = ({
   onLogin,
   onLoadingLogin,
   onLogout,
-  userBalance,
+  // userBalance,
   onBuy,
   buyForm,
   setBuyForm,
   createVolumeForm,
   setCreateVolumeForm,
   isBuying = false,
+  sellForm,
+  setSellForm,
+  isSelling,
+  onSell,
+  cancelOrder,
+  buyer,
+  setBuyer,
+  seller,
+  setSeller,
+  selectedSymbol,
+  onSelectUser,
 }: any) => {
   const [tabActive, setTabActive]: any = useState(TAB_ITEMS[0]?.key);
 
@@ -62,7 +78,29 @@ const HomeView = ({
             label="Amount"
           />
         </div>
-        <Button title={"Submit"} loading={isBuying} disabled={isBuying}  onClick={onBuy} />
+        <Button title={"Buy"} loading={isBuying} disabled={isBuying} onClick={onBuy} />
+      </>
+    );
+  };
+
+  const renderSellForm = () => {
+    return (
+      <>
+        <div className="flex flex-row flex-1 gap-4 my-4">
+          <Input
+            type="number"
+            value={sellForm?.price}
+            onChange={(e: any) => setSellForm({ ...sellForm, price: e?.target?.value })}
+            label="Price"
+          />
+          <Input
+            type="number"
+            value={sellForm?.amount}
+            onChange={(e: any) => setSellForm({ ...sellForm, amount: e?.target?.value })}
+            label="Amount"
+          />
+        </div>
+        <Button title={"Sell"} loading={isSelling} disabled={isSelling} onClick={onSell} />
       </>
     );
   };
@@ -100,26 +138,28 @@ const HomeView = ({
 
   const renderLoginForm = () => {
     return (
-      <div>
-        <div className="text-center text-2xl font-bold">Login</div>
-        <div className="flex flex-row flex-1 gap-4 my-4">
-          <Input
-            value={userInfo?.accessKey}
-            onChange={(e: any) => setUserInfo({ ...userInfo, accessKey: e?.target?.value })}
-            label="Access Key"
+      <div className="gap-4 flex flex-col">
+        {!buyer?.userId && (
+          <LoginForm
+            {...{
+              userInfo: buyer,
+              setUserInfo: setBuyer,
+              onLogin: () => onLogin({ ...buyer, type: "buyer" }),
+              label: "Buyer Login",
+            }}
           />
-          <Input
-            value={userInfo?.secretKey}
-            onChange={(e: any) => setUserInfo({ ...userInfo, secretKey: e?.target?.value })}
-            label="Secret Key"
+        )}
+        <div className="w-full h-[1px] bg-gray-600" />
+        {!seller?.userId && (
+          <LoginForm
+            {...{
+              userInfo: seller,
+              setUserInfo: setSeller,
+              onLogin: () => onLogin({ ...seller, type: "seller" }),
+              label: "Seller Login",
+            }}
           />
-        </div>
-        <Button
-          title={"Login"}
-          loading={onLoadingLogin}
-          disabled={onLoadingLogin || !(userInfo?.accessKey && userInfo?.secretKey)}
-          onClick={onLogin}
-        />
+        )}
       </div>
     );
   };
@@ -133,18 +173,36 @@ const HomeView = ({
           value={searchValue}
           onChange={(e: any) => setSearchValue(e?.target?.value)}
         />
-        {userId && <Profile userId={userId} onLogout={onLogout} userBalance={userBalance} />}
+        {(buyer?.userId || seller?.userId) && (
+          <Profile
+            buyer={buyer}
+            symbol={selectedSymbol}
+            seller={seller}
+            onLogout={onLogout}
+            onSelectUser={onSelectUser}
+            selectedUser={userId}
+          />
+        )}
       </div>
       <div className="flex flex-row gap-4 mt-4">
-        <OrderBooks data={ordersBook} />
+        <OrderBooks data={ordersBook} selectedSymbol={selectedSymbol} />
         <div className="flex flex-1 flex-col">
-          {!userId ? (
+          {!buyer?.userId || !seller?.userId ? (
             renderLoginForm()
           ) : (
             <>
-              <Tabs value={tabActive} onChange={setTabActive} />
+              <Tabs value={tabActive} tabs={TAB_ITEMS} onChange={setTabActive} />
               <div className="flex-grow">
-                {tabActive === 0 ? renderBuyForm() : renderCreateVolumeForm()}
+                {(() => {
+                  switch (tabActive) {
+                    case 0:
+                      return renderBuyForm();
+                    case 1:
+                      return renderCreateVolumeForm();
+                    case 2:
+                      return renderSellForm();
+                  }
+                })()}
               </div>
             </>
           )}
@@ -152,8 +210,8 @@ const HomeView = ({
       </div>
       <div className="flex flex-row gap-4 mt-4">
         <div className="flex-1">
-          <Balance data={userBalance} />
-          <OpenOrders data={openOrders} />
+          {/* <Balance data={userBalance} /> */}
+          <OpenOrders data={openOrders} cancelOrder={cancelOrder} />
         </div>
 
         <HistoryOrder label="Trade History" data={historyOrder} />

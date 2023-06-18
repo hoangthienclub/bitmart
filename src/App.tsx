@@ -17,7 +17,6 @@ const App = () => {
       <ToastContainer theme="dark" hideProgressBar={true} autoClose={3000} />
       <Home />
     </QueryClientProvider>
-
-  )
+  );
 }
 export default App
