@@ -16,7 +16,6 @@ const Home = () => {
   const [searchValue, setSearchValue] = useState("");
   const [selectedSymbol, setSelectedSymbol] = useState<ISymbol>();
   const [ordersBook, setOrdersBook] = useState({});
-  const [openOrders, setOpenOrders] = useState<IOpenOrder[]>([]);
   const [userId, setUserId] = useState("");
   const [userInfo, setUserInfo] = useState<{ accessKey: string; secretKey: string }>({
     accessKey: "",
