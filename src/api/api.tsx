@@ -21,7 +21,7 @@ const getAccountBalance = (userId:string) => {
 }
 
 const buyOrder = (params: any) => {
-  return baseApi({ url: apis.buy, method: "post", params: { ...params, type: "buy-limit" } });
+  return baseApi({ url: apis.buy, method: "POST", params: { ...params, type: "buy-limit" } });
 };
 
 

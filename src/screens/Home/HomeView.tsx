@@ -8,6 +8,7 @@ import OrderBooks from "../../components/OrderBooks";
 import OpenOrders from "../../components/OpenOrder";
 import HistoryOrder from "../../components/HistoryOrder";
 import Profile from "../../components/Profile";
+import Balance from "../../components/Balance";
 
 const TAB_ITEMS = [
   {
@@ -150,7 +151,11 @@ const HomeView = ({
         </div>
       </div>
       <div className="flex flex-row gap-4 mt-4">
-        <OpenOrders data={openOrders} />
+        <div className="flex-1">
+          <Balance data={userBalance} />
+          <OpenOrders data={openOrders} />
+        </div>
+
         <HistoryOrder label="Trade History" data={historyOrder} />
       </div>
     </div>

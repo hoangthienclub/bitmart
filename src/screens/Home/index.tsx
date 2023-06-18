@@ -53,11 +53,11 @@ const Home = () => {
     }
   }, [selectedSymbol]);
 
-  useEffect(() => {
-    if (userId && selectedSymbol?.symbol) {
-      getOpenOrder();
-    }
-  }, [userId, selectedSymbol]);
+  // useEffect(() => {
+  //   if (userId) {
+  //     getOpenOrder();
+  //   }
+  // }, [userId, selectedSymbol]);
 
   const { data: userBalance } = useQuery(
     ["getAccountBalance", { userId }],
@@ -88,7 +88,7 @@ const Home = () => {
       if (data?.data?.status === "error") {
         toast(data?.data?.["err-msg"]);
       } else {
-        getOpenOrder();
+        refetchGetOpenOrder();
       }
     },
   });
@@ -102,33 +102,35 @@ const Home = () => {
     () =>
       API.getHistoryOrder({
         "account-id": userId,
-        symbol: selectedSymbol?.symbol,
       }),
     {
-      enabled: !!userId && !!selectedSymbol?.symbol,
+      enabled: !!userId,
     }
   );
 
-  const { mutateAsync: onGetOpenOrder } = useMutation("getOpenOrder", API.getOpenOrder);
+  const { data: openOrder, refetch: refetchGetOpenOrder } = useQuery(
+    ["getOpenOrder", { userId }],
+    () => API.getOpenOrder({ "account-id": userId })
+  );
 
-  const getOpenOrder = async () => {
-    const buys = onGetOpenOrder({
-      "account-id": userId,
-      symbol: selectedSymbol?.symbol,
-      side: "buy",
-    });
-    const sells = onGetOpenOrder({
-      "account-id": userId,
-      symbol: selectedSymbol?.symbol,
-      side: "buy",
-    });
-    const [buysData, sellsData] = await Promise.all([buys, sells]);
+  // const getOpenOrder = async () => {
+  //   const buys = onGetOpenOrder({
+  //     "account-id": userId,
+  //     // symbol: selectedSymbol?.symbol,
+  //     // side: "buy",
+  //   });
+  //   const sells = onGetOpenOrder({
+  //     "account-id": userId,
+  //     // symbol: selectedSymbol?.symbol,
+  //     // side: "buy",
+  //   });
+  //   const [buysData, sellsData] = await Promise.all([buys, sells]);
 
-    setOpenOrders([
-      ...buysData?.data?.data?.map((it: any) => ({ ...it, side: "buy" })),
-      ...sellsData?.data?.data?.map((it: any) => ({ ...it, side: "sell" })),
-    ]);
-  };
+  //   setOpenOrders([
+  //     ...buysData?.data?.data?.map((it: any) => ({ ...it, side: "buy" })),
+  //     ...sellsData?.data?.data?.map((it: any) => ({ ...it, side: "sell" })),
+  //   ]);
+  // };
 
   const {} = useQuery(["getAllSymbol"], () => API.getAllSymbol(), {
     onSuccess: (data) =>
@@ -233,6 +235,8 @@ const Home = () => {
       price: buyForm?.price,
       amount: buyForm.amount,
       "account-id": userId?.toString(),
+      // "client-order-id": "a0001",
+      // source: "spot-api",
     });
   };
 
@@ -244,7 +248,7 @@ const Home = () => {
         setSearchValue,
         onSelectSymbol,
         ordersBook,
-        openOrders,
+        openOrders: openOrder?.data?.data,
         historyOrder: historyOrder?.data?.data,
         userId,
         userInfo,

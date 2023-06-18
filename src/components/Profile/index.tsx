@@ -1,7 +1,6 @@
-
-import ProfileIc from '../svg/Profile'
-import MemoLogout from '../svg/Logout'
-import { formatNumber } from '../../utils/helper';
+import ProfileIc from "../svg/Profile";
+import MemoLogout from "../svg/Logout";
+import { formatNumber } from "../../utils/helper";
 
 const Profile = ({
   userId,
@@ -12,7 +11,7 @@ const Profile = ({
   onLogout: () => void;
   userBalance: any;
 }) => {
-    const balance = userBalance?.[0];
+  const balance = userBalance?.[0];
   if (userId)
     return (
       <div className="flex flex-row justify-center items-center">
@@ -31,4 +30,4 @@ const Profile = ({
     );
 };
 
-export default Profile
+export default Profile;
