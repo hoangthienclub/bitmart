@@ -3,7 +3,7 @@ import Input from "../Input";
 
 interface ILoginForm {
   userInfo: {
-    accessKey: string;
+    AccessKeyId: string;
     secretKey: string;
   };
   setUserInfo: (value: any) => {};
@@ -18,8 +18,8 @@ const LoginForm = ({ userInfo, setUserInfo, onLogin, loading, label = "Login" }:
       <div className="text-center text-2xl font-bold">{label}</div>
       <div className="flex flex-row flex-1 gap-4 my-4">
         <Input
-          value={userInfo?.accessKey}
-          onChange={(e: any) => setUserInfo({ ...userInfo, accessKey: e?.target?.value })}
+          value={userInfo?.AccessKeyId}
+          onChange={(e: any) => setUserInfo({ ...userInfo, AccessKeyId: e?.target?.value })}
           label="Access Key"
         />
         <Input
@@ -31,7 +31,7 @@ const LoginForm = ({ userInfo, setUserInfo, onLogin, loading, label = "Login" }:
       <Button
         title={"Login"}
         loading={loading}
-        disabled={loading || !(userInfo?.accessKey && userInfo?.secretKey)}
+        disabled={loading || !(userInfo?.AccessKeyId && userInfo?.secretKey)}
         onClick={onLogin}
       />
     </div>

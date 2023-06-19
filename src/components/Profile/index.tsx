@@ -62,14 +62,14 @@ const Profile = ({
 
   return (
     <div className="flex flex-row justify-center items-center">
-      {buyer?.userId &&
-        renderUserInfo({ label: "Buyer", balances: selectedBuyerBalance, userInfo: buyer })}
       {seller?.userId &&
         renderUserInfo({
           label: "Seller",
           balances: selectedSellerBalance,
           userInfo: seller,
         })}
+        {buyer?.userId &&
+        renderUserInfo({ label: "Buyer", balances: selectedBuyerBalance, userInfo: buyer })}
       <MemoLogout onClick={onLogout} className="cursor-pointer ml-2 w-5 h-5" />
     </div>
   );

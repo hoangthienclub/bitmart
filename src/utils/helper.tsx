@@ -13,3 +13,8 @@ export const formatNumber = (number: any) => {
     return value;
   };
 
+  export const floored_val = (val: number, digits: number) => {
+    const power = Math.pow(10, digits);
+    return +(Math.floor(val * power) / power).toFixed(digits);
+  }
+

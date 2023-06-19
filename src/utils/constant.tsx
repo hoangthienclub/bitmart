@@ -1,5 +1,5 @@
 const STORE_KEYS = {
-  accessKeyId: "AccessKeyId",
+  AccessKeyId: "AccessKeyId",
   secretKey: "secretKey",
   ALL_SYMBOL: "ALL_SYMBOL",
   BUYER: "BUYER",

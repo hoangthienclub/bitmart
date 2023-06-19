@@ -40,7 +40,7 @@ const baseApi = async ({
     newParams = { ...newParams, AccessKeyId: params?.AccessKeyId };
   } else {
     secretKey = sessionStorage.getItem(STORE_KEYS.secretKey);
-    const AccessKeyId: any = sessionStorage.getItem(STORE_KEYS.accessKeyId);
+    const AccessKeyId: any = sessionStorage.getItem(STORE_KEYS.AccessKeyId);
     newParams.AccessKeyId = AccessKeyId;
     if (method === "GET") {
       newParams = { ...params, ...newParams };

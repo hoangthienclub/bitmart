@@ -35,10 +35,7 @@ const HomeView = ({
   openOrders = [],
   historyOrder = [],
   userId,
-  userInfo,
-  setUserInfo,
   onLogin,
-  onLoadingLogin,
   onLogout,
   // userBalance,
   onBuy,
@@ -58,6 +55,7 @@ const HomeView = ({
   setSeller,
   selectedSymbol,
   onSelectUser,
+  onCreateVolume
 }: any) => {
   const [tabActive, setTabActive]: any = useState(TAB_ITEMS[0]?.key);
 
@@ -130,8 +128,15 @@ const HomeView = ({
             }
             label="Amount"
           />
+            <Input
+            value={createVolumeForm?.desiredVolume}
+            onChange={(e: any) =>
+              setCreateVolumeForm({ ...createVolumeForm, desiredVolume: e?.target?.value })
+            }
+            label="Desired Volume"
+          />
         </div>
-        <Button title={"Submit"} onClick={() => {}} />
+        <Button title={"Submit"} onClick={onCreateVolume} />
       </>
     );
   };

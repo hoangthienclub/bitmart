@@ -8,12 +8,13 @@ import variables from "../../api/variable";
 import { inflate } from "pako";
 import { toast } from "react-toastify";
 import allSymbolData from "../../utils/allSymbol";
+import { floored_val } from "../../utils/helper";
 
 let ws: any;
 let preSymbol: any = null;
 
 const defaultUserInfo = {
-  accessKey: "",
+  AccessKeyId: "",
   secretKey: "",
   userId: "",
   balances: [],
@@ -26,8 +27,8 @@ const Home = () => {
   const [buyer, setBuyer] = useState({ ...defaultUserInfo });
   const [seller, setSeller] = useState({ ...defaultUserInfo });
   const [userId, setUserId] = useState("");
+  const [createVolLoading, setCreateVolLoading] = useState(false)
   useEffect(() => {
-    console.log('12312312312');
     
     initSocket();
     getUserInfo();
@@ -47,6 +48,7 @@ const Home = () => {
     min: 0,
     max: 0,
     amount: 0,
+    desiredVolume: 0
   });
 
   const getUserInfo = () => {
@@ -57,10 +59,10 @@ const Home = () => {
 
     // const secretKey = sessionStorage.getItem(STORE_KEYS.secretKey);
     if (buyer?.userId) {
-      _onLogin({ accessKey: buyer?.accessKey, secretKey: buyer?.secretKey, type: "buyer" });
+      _onLogin({ AccessKeyId: buyer?.AccessKeyId, secretKey: buyer?.secretKey, type: "buyer" });
     }
     if (seller?.userId) {
-      _onLogin({ accessKey: seller?.accessKey, secretKey: seller?.secretKey, type: "seller" });
+      _onLogin({ AccessKeyId: seller?.AccessKeyId, secretKey: seller?.secretKey, type: "seller" });
     }
   };
 
@@ -94,7 +96,7 @@ const Home = () => {
         } else {
           const balances = await getBalanceInfo({
             userId: data?.data?.data?.[0]?.id,
-            accessKey: params?.accessKey,
+            AccessKeyId: params?.AccessKeyId,
             secretKey: params?.secretKey,
           });
           if (params?.type === "buyer") {
@@ -132,7 +134,7 @@ const Home = () => {
             );
           }
 
-          // sessionStorage.setItem(STORE_KEYS.accessKeyId, params?.accessKey);
+          // sessionStorage.setItem(STORE_KEYS.AccessKeyId, params?.AccessKeyId);
           // sessionStorage.setItem(STORE_KEYS.secretKey, params?.secretKey);
           // setUserId(data?.data?.data?.[0]?.id);
         }
@@ -155,7 +157,7 @@ const Home = () => {
     },
   });
 
-  const { isLoading: isSelling, mutate: _onSellOrder } = useMutation(["sellOrder"], API.buyOrder, {
+  const { isLoading: isSelling, mutateAsync: _onSellOrderAsync, mutate: _onSellOrder } = useMutation(["sellOrder"], API.sellOrder, {
     onSuccess: (data) => {
       if (data?.data?.status === "error") {
         toast(data?.data?.["err-msg"]);
@@ -308,19 +310,21 @@ const Home = () => {
 
   const onBuy = () => {
     _onBuyOrder({
-      symbol: selectedSymbol?.symbol,
+      symbol: selectedSymbol?.symbol ?? '',
       price: buyForm?.price,
       amount: buyForm.amount,
-      "account-id": userId?.toString(),
+      AccessKeyId: buyer?.AccessKeyId,
+      secretKey: buyer?.secretKey,
     });
   };
 
   const onSell = () => {
     _onSellOrder({
-      symbol: selectedSymbol?.symbol,
+      symbol: selectedSymbol?.symbol ?? '',
       price: buyForm?.price,
       amount: buyForm.amount,
-      "account-id": userId?.toString(),
+      AccessKeyId: seller?.AccessKeyId,
+      secretKey: seller?.secretKey,
     });
   };
 
@@ -332,10 +336,86 @@ const Home = () => {
   };
 
   const onSelectUser = (userInfo: any) => {
-    sessionStorage.setItem(STORE_KEYS.accessKeyId, userInfo?.accessKey);
+    sessionStorage.setItem(STORE_KEYS.AccessKeyId, userInfo?.AccessKeyId);
     sessionStorage.setItem(STORE_KEYS.secretKey, userInfo?.secretKey);
     setUserId(userInfo?.userId);
   };
+
+  const onCreateVolume = async () => {
+    setCreateVolLoading(true)
+    let { min, max, amount, desiredVolume } = createVolumeForm;
+    const numDecimalDigits = 6;
+    const user1=  seller;
+    const user2 = buyer;
+
+    try {
+      let count = 0;
+      while (count < desiredVolume) {
+        const price = floored_val(
+          Math.random() * (max - min) + min,
+          numDecimalDigits,
+        );
+        let amountCoin = floored_val(
+          amount / price, numDecimalDigits)
+        //Step 1 : user1 sells coin
+        await _onSellOrderAsync({ price, amount: amountCoin, symbol: selectedSymbol?.symbol ?? '', AccessKeyId: user1?.AccessKeyId, secretKey: user1?.secretKey });
+        //Step 2 : user2 buys coin
+        await _onBuyOrder({ price, amount: amountCoin, symbol: selectedSymbol?.symbol ?? '', AccessKeyId: user2?.AccessKeyId, secretKey: user2?.secretKey })
+        // Step3 : check user2 balanance
+      
+        let user2Balances = await getBalanceInfo({
+          userId: user2?.userId,
+          AccessKeyId: user2?.AccessKeyId,
+          secretKey: user2?.secretKey,
+        });
+
+        const user2Balance = user2Balances?.data?.data?.list?.find(
+          (it: any) =>
+            it?.currency === 'gns'
+        );
+        if (+user2Balance?.balance < +amountCoin) {
+          amountCoin = +user2Balance?.balance
+        }
+        //Step 4 : user2 sells coin
+
+        await _onSellOrderAsync({ price, amount: amountCoin, symbol: selectedSymbol?.symbol ?? '', AccessKeyId: user2?.AccessKeyId, secretKey: user2?.secretKey });
+        
+        //Step 5 : user1 buys coin
+
+        await _onBuyOrder({ price, amount: amountCoin, symbol: selectedSymbol?.symbol ?? '', AccessKeyId: user1?.AccessKeyId, secretKey: user1?.secretKey })
+
+        //  get user1 user information
+        let user1Balances = await getBalanceInfo({
+          userId: user1?.userId,
+          AccessKeyId: user1?.AccessKeyId,
+          secretKey: user1?.secretKey,
+        });
+
+        const user1Balance = user1Balances?.data?.data?.list?.find(
+          (it: any) =>
+            it?.currency === 'gns'
+        );
+          //checking
+        if (+user1Balance?.balance < +amountCoin) {
+          amountCoin = +user1Balance?.balance
+        }
+
+        // if (sellApi.balance < amountCoin) {
+        //   amountCoin = buyer.balance;
+        // }
+        // console.log({
+        //   price,
+        //   amountCoin
+        // })
+        count++;
+      }
+    } catch (err) {
+      const cancelUser1Order = API.cancelAllOrder({ userId: user1?.userId, symbol: selectedSymbol?.symbol ?? '', size: desiredVolume, side: 'sell', types: 'sell-limit', AccessKeyId: user1?.AccessKeyId ?? '', secretKey: user1?.secretKey ?? '' });
+
+      const cancelUser2Order = API.cancelAllOrder({ userId: user2?.userId, symbol: selectedSymbol?.symbol ?? '', size: desiredVolume, side: 'sell', types: 'sell-limit', AccessKeyId: user2?.AccessKeyId ?? '', secretKey: user2?.secretKey ?? '' });
+      await Promise.all([cancelUser1Order, cancelUser2Order])
+    }
+  }
   
   return (
     <HomeView
@@ -388,6 +468,7 @@ const Home = () => {
         setSeller,
         selectedSymbol,
         onSelectUser,
+        onCreateVolume
       }}
     />
   );

@@ -7,7 +7,7 @@ const apis = {
   allSymbol: "/v1/common/symbols",
   accountInfo: "/v1/account/accounts",
   buy: "/v1/order/orders/place",
-  sell: "",
+  cancelAllOrder: '/v1/order/orders/batchCancelOpenOrders',
   cancel: (orderId: string) => `/v1/order/orders/${orderId}/submitcancel`,
 };
 const method = 'GET';
