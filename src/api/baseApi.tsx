@@ -3,6 +3,7 @@ import cryptoJS from "crypto-js";
 import variables from "./variable";
 import axios from "axios";
 import STORE_KEYS from "../utils/constant";
+import moment from "moment";
 
 const getApiUrl = (url: any, parameters: any, secretKey?: string, method = "GET") => {
   const { host } = variables ?? {};
@@ -24,32 +25,62 @@ const baseApi = async ({
   url,
   params,
   method = "GET",
-  isLogin = false,
+  // isLogin = false,
 }: {
   url: string;
   params?: any;
   method?: "GET" | "POST";
-  isLogin?: boolean;
+  // isLogin?: boolean;
 }) => {
   const { DEFAULT_PARAMS } = variables ?? {};
   let secretKey;
-  let newParams: any = { ...DEFAULT_PARAMS };
 
-  if (isLogin) {
-    secretKey = params?.secretKey;
-    newParams = { ...newParams, AccessKeyId: params?.AccessKeyId };
-  } else {
-    secretKey = sessionStorage.getItem(STORE_KEYS.secretKey);
-    const AccessKeyId: any = sessionStorage.getItem(STORE_KEYS.AccessKeyId);
-    newParams.AccessKeyId = AccessKeyId;
-    if (method === "GET") {
-      newParams = { ...params, ...newParams };
-    }
+  let newParams: any = {
+    ...DEFAULT_PARAMS,
+    Timestamp: moment().utc().format("YYYY-MM-DDTHH:mm:ss"),
+  };
+
+  
+  // if (isLogin) {
+  //   secretKey = params?.secretKey;
+  //   newParams = { ...newParams, AccessKeyId: params?.AccessKeyId };
+  // } else {
+  //   secretKey = sessionStorage.getItem(STORE_KEYS.secretKey);
+  //   const AccessKeyId: any = sessionStorage.getItem(STORE_KEYS.AccessKeyId);
+  //   newParams.AccessKeyId = AccessKeyId;
+  //   if (method === "GET") {
+  //     newParams = { ...params, ...newParams };
+  //   }
+  // }
+  if (params?.secretKey) secretKey = params?.secretKey;
+  else secretKey = sessionStorage.getItem(STORE_KEYS.secretKey);
+
+  delete newParams?.secretKey; 
+  if (params?.AccessKeyId) newParams.AccessKeyId = params?.AccessKeyId;
+  else newParams.AccessKeyId = sessionStorage.getItem(STORE_KEYS.AccessKeyId);
+
+  if (method === "GET") {
+    newParams = { ...params, ...newParams };
   }
 
-  console.log("method", method);
-  console.log("newParams", newParams);
+  const PostParam = { ...params };
+  delete PostParam?.secretKey;
+  delete PostParam.AccessKeyId
+
+
+  // console.log('===================');
+  // console.log("method", method);
+  // console.log("newParams", newParams);
+  // console.log("params", params);
+  // console.log('===================');
+
+  console.log("=============== api param" );
   console.log("params", params);
+  console.log('====================================');
+  console.log("newParams", newParams);
+  console.log("PostParam====================================", PostParam);
+  console.log("===============");
+  
 
   const parseUrl = getApiUrl(url, newParams, secretKey, method);
 
@@ -57,11 +88,9 @@ const baseApi = async ({
     url: parseUrl,
     method,
     ...(method === "POST" && {
-      data: params,
+      data: PostParam,
     }),
   };
-
-  console.log("config", config);
 
   return await axios(config);
 };

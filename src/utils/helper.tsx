@@ -18,3 +18,7 @@ export const formatNumber = (number: any) => {
     return +(Math.floor(val * power) / power).toFixed(digits);
   }
 
+  export const delay = (delayInms: number) => {
+    return new Promise((resolve) => setTimeout(resolve, delayInms));
+  };
+

@@ -2,11 +2,12 @@ import baseApi from "./baseApi"
 import variables from "./variable"
 const { apis } = variables
 interface ISellBuy {
-  symbol: string,
-  price: number,
-  amount: number,
-  AccessKeyId: string,
-  secretKey: string
+  symbol: string;
+  price: number;
+  amount: number;
+  AccessKeyId: string;
+  secretKey: string;
+  "account-id": string;
 }
 
 const getAllSymbol = () => {
@@ -15,15 +16,18 @@ const getAllSymbol = () => {
 const getUserInfo = ({
   AccessKeyId,
   secretKey,
+  type
 }: {
   AccessKeyId: string;
   secretKey: string;
   type: string;
 }) => {
+  console.log("type===========>", AccessKeyId, secretKey, type);
+  
   return baseApi({
     url: apis.accountInfo,
     params: { AccessKeyId: AccessKeyId, secretKey },
-    isLogin: true,
+    // isLogin: true,
   });
 };
 
@@ -46,7 +50,6 @@ const getAccountBalance = ({
   return baseApi({
     url: `${apis.accountInfo}/${userId}/balance`,
     params: { AccessKeyId, secretKey },
-    isLogin: true,
   });
 };
 

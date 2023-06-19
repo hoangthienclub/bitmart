@@ -8,7 +8,7 @@ import variables from "../../api/variable";
 import { inflate } from "pako";
 import { toast } from "react-toastify";
 import allSymbolData from "../../utils/allSymbol";
-import { floored_val } from "../../utils/helper";
+import { delay, floored_val } from "../../utils/helper";
 
 let ws: any;
 let preSymbol: any = null;
@@ -52,7 +52,6 @@ const Home = () => {
   });
 
   const getUserInfo = () => {
-    console.log("getUserInfo==========>", getUserInfo);
     
     const buyer = JSON.parse(sessionStorage.getItem(STORE_KEYS.BUYER) || "{}");
     const seller = JSON.parse(sessionStorage.getItem(STORE_KEYS.SELLER) || "{}");
@@ -89,7 +88,7 @@ const Home = () => {
     API.getUserInfo,
     {
       onSuccess: async (data, params) => {
-        console.log("data", data);
+        // console.log("getUserInfo", params, data);
         
         if (data?.data?.status === "error") {
           toast(data?.data?.["err-msg"]);
@@ -310,11 +309,12 @@ const Home = () => {
 
   const onBuy = () => {
     _onBuyOrder({
-      symbol: selectedSymbol?.symbol ?? '',
+      symbol: selectedSymbol?.symbol ?? "",
       price: buyForm?.price,
       amount: buyForm.amount,
       AccessKeyId: buyer?.AccessKeyId,
       secretKey: buyer?.secretKey,
+      "account-id": buyer?.userId,
     });
   };
 
@@ -325,6 +325,7 @@ const Home = () => {
       amount: buyForm.amount,
       AccessKeyId: seller?.AccessKeyId,
       secretKey: seller?.secretKey,
+      "account-id": seller?.userId,
     });
   };
 
@@ -340,35 +341,55 @@ const Home = () => {
     sessionStorage.setItem(STORE_KEYS.secretKey, userInfo?.secretKey);
     setUserId(userInfo?.userId);
   };
-
+  
   const onCreateVolume = async () => {
     setCreateVolLoading(true)
     let { min, max, amount, desiredVolume } = createVolumeForm;
-    const numDecimalDigits = 6;
-    const user1=  seller;
-    const user2 = buyer;
-
+    const numDecimalDigits = 4;
+    const user1=  buyer;
+    const user2 = seller;
+    
     try {
       let count = 0;
       while (count < desiredVolume) {
         const price = floored_val(
-          Math.random() * (max - min) + min,
+          Math.random() * (+max - (+min)) + +min,
           numDecimalDigits,
         );
+        
         let amountCoin = floored_val(
           amount / price, numDecimalDigits)
         //Step 1 : user1 sells coin
-        await _onSellOrderAsync({ price, amount: amountCoin, symbol: selectedSymbol?.symbol ?? '', AccessKeyId: user1?.AccessKeyId, secretKey: user1?.secretKey });
-        //Step 2 : user2 buys coin
-        await _onBuyOrder({ price, amount: amountCoin, symbol: selectedSymbol?.symbol ?? '', AccessKeyId: user2?.AccessKeyId, secretKey: user2?.secretKey })
-        // Step3 : check user2 balanance
+
+
+        console.log("amountCoin", amountCoin);
+        
+        await _onSellOrderAsync({
+          "account-id": user1?.userId,
+          price,
+          amount: amountCoin,
+          symbol: selectedSymbol?.symbol ?? "",
+          AccessKeyId: user1?.AccessKeyId,
+          secretKey: user1?.secretKey,
+        });
       
+        //Step 2 : user2 buys coin
+        await _onBuyOrder({
+          "account-id": user2?.userId,
+          price,
+          amount: amountCoin,
+          symbol: selectedSymbol?.symbol ?? "",
+          AccessKeyId: user2?.AccessKeyId,
+          secretKey: user2?.secretKey,
+        });
+        // Step3 : check user2 balanance
+
         let user2Balances = await getBalanceInfo({
           userId: user2?.userId,
           AccessKeyId: user2?.AccessKeyId,
           secretKey: user2?.secretKey,
         });
-
+        await delay(1000);
         const user2Balance = user2Balances?.data?.data?.list?.find(
           (it: any) =>
             it?.currency === 'gns'
@@ -378,11 +399,25 @@ const Home = () => {
         }
         //Step 4 : user2 sells coin
 
-        await _onSellOrderAsync({ price, amount: amountCoin, symbol: selectedSymbol?.symbol ?? '', AccessKeyId: user2?.AccessKeyId, secretKey: user2?.secretKey });
-        
+        await _onSellOrderAsync({
+          "account-id": user2?.userId,
+          price,
+          amount: amountCoin,
+          symbol: selectedSymbol?.symbol ?? "",
+          AccessKeyId: user2?.AccessKeyId,
+          secretKey: user2?.secretKey,
+        });
+        await delay(1000);
         //Step 5 : user1 buys coin
 
-        await _onBuyOrder({ price, amount: amountCoin, symbol: selectedSymbol?.symbol ?? '', AccessKeyId: user1?.AccessKeyId, secretKey: user1?.secretKey })
+        await _onBuyOrder({
+          "account-id": user1?.userId,
+          price,
+          amount: amountCoin,
+          symbol: selectedSymbol?.symbol ?? "",
+          AccessKeyId: user1?.AccessKeyId,
+          secretKey: user1?.secretKey,
+        });
 
         //  get user1 user information
         let user1Balances = await getBalanceInfo({
