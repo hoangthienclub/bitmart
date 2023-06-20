@@ -10,7 +10,7 @@ const Input = ({
   value: string | number;
 }) => {
   return (
-    <div className="flex flex-1 flex-col">
+    <div className="flex flex-1 flex-col dark">
       <label
         htmlFor="first_name"
         className="block mb-2 text-sm font-medium text-gray-900 dark:text-white text-left">

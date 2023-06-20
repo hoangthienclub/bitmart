@@ -14,7 +14,7 @@ interface ILoginForm {
 
 const LoginForm = ({ userInfo, setUserInfo, onLogin, loading, label = "Login" }: ILoginForm) => {
   return (
-    <div>
+    <div className='dark'>
       <div className="text-center text-2xl font-bold">{label}</div>
       <div className="flex flex-row flex-1 gap-4 my-4">
         <Input

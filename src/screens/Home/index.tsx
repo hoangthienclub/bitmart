@@ -351,6 +351,7 @@ const Home = () => {
     
     try {
       let count = 0;
+      toast(`Count Time : ${count}`)
       while (count < desiredVolume) {
         const price = floored_val(
           Math.random() * (+max - (+min)) + +min,

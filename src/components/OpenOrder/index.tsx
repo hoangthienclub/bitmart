@@ -16,7 +16,7 @@ const OpenOrders = ({
     (a: IOpenOrder, b: IOpenOrder) => a["created-at"] - b["created-at"]
   );
   return (
-    <div className="relative overflow-x-auto shadow-md sm:rounded-lg flex-1 max-h-[600px] overflow-auto">
+    <div className="dark relative overflow-x-auto shadow-md sm:rounded-lg flex-1 max-h-[600px] overflow-auto">
       <div className="sticky top-0 p-5 text-lg font-semibold text-left text-gray-900 bg-white dark:text-white dark:bg-gray-800">
         Open Orders
       </div>

@@ -18,7 +18,7 @@ const OrderBooks = ({
     : "";
 
   return (
-    <div className="orders-book-table relative flex-[2] overflow-x-auto shadow-md sm:rounded-lg max-h-[600px] overflow-auto">
+    <div className="dark orders-book-table relative flex-[2] overflow-x-auto shadow-md sm:rounded-lg max-h-[600px] overflow-auto">
       <div className="sticky top-0 p-5 text-lg font-semibold text-left text-gray-900 bg-white dark:text-white dark:bg-gray-800">
         {label}
         {currency && <span className="ml-2">({currency})</span>}
