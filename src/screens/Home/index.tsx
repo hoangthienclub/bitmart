@@ -137,7 +137,10 @@ const Home = () => {
           // sessionStorage.setItem(STORE_KEYS.secretKey, params?.secretKey);
           // setUserId(data?.data?.data?.[0]?.id);
         }
+        
       },
+      onError: (err: any) => console.log('onError', err)
+      
     }
   );
 

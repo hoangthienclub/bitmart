@@ -4,6 +4,7 @@ import variables from "./variable";
 import axios from "axios";
 import STORE_KEYS from "../utils/constant";
 import moment from "moment";
+import { toast } from "react-toastify";
 
 const getApiUrl = (url: any, parameters: any, secretKey?: string, method = "GET") => {
   const { host } = variables ?? {};
@@ -74,12 +75,12 @@ const baseApi = async ({
   // console.log("params", params);
   // console.log('===================');
 
-  console.log("=============== api param" );
-  console.log("params", params);
-  console.log('====================================');
-  console.log("newParams", newParams);
-  console.log("PostParam====================================", PostParam);
-  console.log("===============");
+  // console.log("=============== api param" );
+  // console.log("params", params);
+  // console.log('====================================');
+  // console.log("newParams", newParams);
+  // console.log("PostParam====================================", PostParam);
+  // console.log("===============");
   
 
   const parseUrl = getApiUrl(url, newParams, secretKey, method);
@@ -91,8 +92,12 @@ const baseApi = async ({
       data: PostParam,
     }),
   };
-
-  return await axios(config);
+  const data = await axios(config);
+  if (data?.data?.status === 'error') {
+    toast(data?.data?.["err-msg"]);
+    return Promise.reject(data)
+  }
+  else return Promise.resolve(data)
 };
 
 export default baseApi;
