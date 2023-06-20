@@ -39,7 +39,7 @@ const Profile = ({
   const renderUserInfo = ({ label, balances, userInfo }: any) => {
     return (
       <div
-        className={`flex flex-row mx-2 cursor-pointer ${
+        className={`flex flex-row mx-2 cursor-pointer dark ${
           selectedUser === userInfo?.userId ? "bg-blue-800 rounded-md p-2" : ""
         }`}
         onClick={() => onSelectUser(userInfo)}>
@@ -61,7 +61,7 @@ const Profile = ({
   };
 
   return (
-    <div className="flex flex-row justify-center items-center">
+    <div className="flex flex-row justify-center items-center dark">
       {seller?.userId &&
         renderUserInfo({
           label: "Seller",

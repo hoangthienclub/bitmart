@@ -170,7 +170,7 @@ const HomeView = ({
   };
 
   return (
-    <div className="flex flex-col flex-1">
+    <div className="flex flex-col flex-1 dark">
       <div className="flex flex-row justify-between">
         <SearchInput
           onSelectSymbol={onSelectSymbol}

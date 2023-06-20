@@ -52,7 +52,7 @@ const HistoryOrder = ({ data = [] }: { label?: string, data?: IHistoryOrder[] })
           </tbody>
         </table>
         {!data?.length && (
-          <div className="w-full h-[300px] justify-center items-center flex flex-col">
+          <div className="w-full h-[300px] justify-center items-center flex flex-col dark">
             <Empty className="w-[40px] h-[40px]" />
             No Data
           </div>
