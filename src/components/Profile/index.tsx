@@ -2,6 +2,7 @@ import ProfileIc from "../svg/Profile";
 import MemoLogout from "../svg/Logout";
 import { formatNumber } from "../../utils/helper";
 import { ISymbol } from "../../interface";
+import Reload from "../svg/Reload";
 
 const Profile = ({
   buyer,
@@ -10,6 +11,7 @@ const Profile = ({
   symbol,
   onSelectUser,
   selectedUser,
+  reloadProfile,
 }: {
   buyer: any;
   seller: any;
@@ -17,6 +19,7 @@ const Profile = ({
   onLogout: () => void;
   onSelectUser: (id: string) => void;
   selectedUser: string;
+  reloadProfile: () => void;
 }) => {
   const { balances: sellerBalances } = seller ?? {};
   const { balances: buyerBalances } = buyer ?? {};
@@ -62,13 +65,19 @@ const Profile = ({
 
   return (
     <div className="flex flex-row justify-center items-center dark">
+      {(seller?.userId || buyer?.userId) && (
+        <div onClick={reloadProfile} className="cursor-pointer hover:bg-blue-800 p-2 rounded">
+          <Reload />
+        </div>
+      )}
+
       {seller?.userId &&
         renderUserInfo({
           label: "Seller",
           balances: selectedSellerBalance,
           userInfo: seller,
         })}
-        {buyer?.userId &&
+      {buyer?.userId &&
         renderUserInfo({ label: "Buyer", balances: selectedBuyerBalance, userInfo: buyer })}
       <MemoLogout onClick={onLogout} className="cursor-pointer ml-2 w-5 h-5" />
     </div>

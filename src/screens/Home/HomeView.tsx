@@ -11,14 +11,14 @@ import Profile from "../../components/Profile";
 // import Balance from "../../components/Balance";
 import LoginForm from "../../components/LoginForm";
 
-export const TAB_ITEMS = [
+export const TAB_ITEMS = (symbol = "") => [
   {
     key: 0,
-    label: "Buy",
+    label: `Buy ${symbol} `,
   },
   {
     key: 2,
-    label: "Sell",
+    label: `Sell  ${symbol}`,
   },
   {
     key: 1,
@@ -55,9 +55,14 @@ const HomeView = ({
   setSeller,
   selectedSymbol,
   onSelectUser,
-  onCreateVolume
+  onCreateVolume,
+  reloadProfile
 }: any) => {
-  const [tabActive, setTabActive]: any = useState(TAB_ITEMS[0]?.key);
+  const [tabActive, setTabActive]: any = useState(
+    TAB_ITEMS(selectedSymbol?.["base-currency"])[0]?.key
+  );
+
+  const quoteCurrency= selectedSymbol?.["quote-currency"]??''
 
   const renderBuyForm = () => {
     return (
@@ -126,9 +131,9 @@ const HomeView = ({
             onChange={(e: any) =>
               setCreateVolumeForm({ ...createVolumeForm, amount: e?.target?.value })
             }
-            label="Amount"
+            label={`Amount ${quoteCurrency}`}
           />
-            <Input
+          <Input
             value={createVolumeForm?.desiredVolume}
             onChange={(e: any) =>
               setCreateVolumeForm({ ...createVolumeForm, desiredVolume: e?.target?.value })
@@ -186,6 +191,7 @@ const HomeView = ({
             onLogout={onLogout}
             onSelectUser={onSelectUser}
             selectedUser={userId}
+            reloadProfile={reloadProfile}
           />
         )}
       </div>
@@ -196,7 +202,11 @@ const HomeView = ({
             renderLoginForm()
           ) : (
             <>
-              <Tabs value={tabActive} tabs={TAB_ITEMS} onChange={setTabActive} />
+              <Tabs
+                value={tabActive}
+                tabs={TAB_ITEMS(selectedSymbol?.["base-currency"])}
+                onChange={setTabActive}
+              />
               <div className="flex-grow">
                 {(() => {
                   switch (tabActive) {

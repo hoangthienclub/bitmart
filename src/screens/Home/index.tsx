@@ -381,8 +381,6 @@ const Home = () => {
         //Step 1 : user1 sells coin
 
 
-        console.log("amountCoin", amountCoin);
-
         //  get user1 user information
         const user1Balances = await getBalanceInfo({
           userId: user1?.userId,
@@ -460,6 +458,18 @@ const Home = () => {
       await Promise.all([cancelUser1Order, cancelUser2Order])
     }
   }
+
+  const reloadProfile = () => {
+    if (buyer?.userId) {
+      _onLogin({ AccessKeyId: buyer?.AccessKeyId, secretKey: buyer?.secretKey, type: "buyer" });
+    }
+    if (seller?.userId) {
+      _onLogin({ AccessKeyId: seller?.AccessKeyId, secretKey: seller?.secretKey, type: "seller" });
+    }
+    if(userSelectedInfo?.userId){
+      refetchOrders();
+    }
+  };
   
   return (
     <HomeView
@@ -512,7 +522,8 @@ const Home = () => {
         setSeller,
         selectedSymbol,
         onSelectUser,
-        onCreateVolume
+        onCreateVolume,
+        reloadProfile
       }}
     />
   );
