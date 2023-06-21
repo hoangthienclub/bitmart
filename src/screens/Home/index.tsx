@@ -27,6 +27,7 @@ const Home = () => {
   const [buyer, setBuyer] = useState({ ...defaultUserInfo });
   const [seller, setSeller] = useState({ ...defaultUserInfo });
   const [userId, setUserId] = useState("");
+  const [userSelectedInfo, setUserSelectedInfo] = useState({ ...defaultUserInfo });
   const [createVolLoading, setCreateVolLoading] = useState(false)
   useEffect(() => {
     
@@ -153,10 +154,15 @@ const Home = () => {
     onSuccess: (data) => {
       if (data?.data?.status === "error") {
         toast(data?.data?.["err-msg"]);
+        throw new Error("Error");
       } else {
         refetchOrders();
       }
     },
+    onError: (error) => {
+      console.log('error')
+      throw new Error("Error");
+    }
   });
 
   const { isLoading: isSelling, mutateAsync: _onSellOrderAsync, mutate: _onSellOrder } = useMutation(["sellOrder"], API.sellOrder, {
@@ -173,10 +179,15 @@ const Home = () => {
     onSuccess: (data) => {
       if (data?.data?.status === "error") {
         toast(data?.data?.["err-msg"]);
+        throw new Error("Error");
       } else {
         refetchOrders();
       }
     },
+    onError: (error) => {
+      console.log('error')
+      throw new Error("Error");
+    }
   });
 
   const { data: historyOrder, refetch: refetchGetHistoryOrder } = useQuery(
@@ -224,6 +235,7 @@ const Home = () => {
   const onLogout = () => {
     setUserId("");
     sessionStorage.clear();
+    setUserSelectedInfo({...defaultUserInfo });
     setBuyer({ ...defaultUserInfo });
     setSeller({ ...defaultUserInfo });
   };
@@ -315,21 +327,23 @@ const Home = () => {
       symbol: selectedSymbol?.symbol ?? "",
       price: buyForm?.price,
       amount: buyForm.amount,
-      AccessKeyId: buyer?.AccessKeyId,
-      secretKey: buyer?.secretKey,
-      "account-id": buyer?.userId,
+      AccessKeyId: userSelectedInfo?.AccessKeyId,
+      secretKey: userSelectedInfo?.secretKey,
+      "account-id": userSelectedInfo?.userId,
     });
+    refetchOrders();
   };
 
   const onSell = () => {
     _onSellOrder({
       symbol: selectedSymbol?.symbol ?? '',
-      price: buyForm?.price,
-      amount: buyForm.amount,
-      AccessKeyId: seller?.AccessKeyId,
-      secretKey: seller?.secretKey,
-      "account-id": seller?.userId,
+      price: sellForm?.price,
+      amount: sellForm.amount,
+      AccessKeyId: userSelectedInfo?.AccessKeyId,
+      secretKey: userSelectedInfo?.secretKey,
+      "account-id": userSelectedInfo?.userId,
     });
+    refetchOrders();
   };
 
   const cancelOrder = (id: string) => {
@@ -343,19 +357,20 @@ const Home = () => {
     sessionStorage.setItem(STORE_KEYS.AccessKeyId, userInfo?.AccessKeyId);
     sessionStorage.setItem(STORE_KEYS.secretKey, userInfo?.secretKey);
     setUserId(userInfo?.userId);
+    setUserSelectedInfo(userInfo)
   };
   
   const onCreateVolume = async () => {
     setCreateVolLoading(true)
-    let { min, max, amount, desiredVolume } = createVolumeForm;
+    const { min, max, amount, desiredVolume } = createVolumeForm;
     const numDecimalDigits = 4;
-    const user1=  buyer;
-    const user2 = seller;
+    const user1=  seller;
+    const user2 = buyer;
     
     try {
       let count = 0;
-      toast(`Count Time : ${count}`)
-      while (count < desiredVolume) {
+      while (count < +desiredVolume) {
+        toast(`Count Time : ${count + 1}`)
         const price = floored_val(
           Math.random() * (+max - (+min)) + +min,
           numDecimalDigits,
@@ -367,6 +382,22 @@ const Home = () => {
 
 
         console.log("amountCoin", amountCoin);
+
+        //  get user1 user information
+        const user1Balances = await getBalanceInfo({
+          userId: user1?.userId,
+          AccessKeyId: user1?.AccessKeyId,
+          secretKey: user1?.secretKey,
+        });
+
+        const user1Balance = user1Balances?.data?.data?.list?.find(
+          (it: any) =>
+            it?.currency === selectedSymbol?.["base-currency"]
+        );
+          //checking
+        if (+user1Balance?.balance < +amountCoin) {
+          amountCoin = floored_val(+user1Balance?.balance, numDecimalDigits)
+        }
         
         await _onSellOrderAsync({
           "account-id": user1?.userId,
@@ -376,7 +407,6 @@ const Home = () => {
           AccessKeyId: user1?.AccessKeyId,
           secretKey: user1?.secretKey,
         });
-      
         //Step 2 : user2 buys coin
         await _onBuyOrder({
           "account-id": user2?.userId,
@@ -387,22 +417,21 @@ const Home = () => {
           secretKey: user2?.secretKey,
         });
         // Step3 : check user2 balanance
-
-        let user2Balances = await getBalanceInfo({
+        await delay(2000);
+        const user2Balances = await getBalanceInfo({
           userId: user2?.userId,
           AccessKeyId: user2?.AccessKeyId,
           secretKey: user2?.secretKey,
         });
-        await delay(1000);
         const user2Balance = user2Balances?.data?.data?.list?.find(
           (it: any) =>
-            it?.currency === 'gns'
+            it?.currency === selectedSymbol?.["base-currency"]
         );
         if (+user2Balance?.balance < +amountCoin) {
-          amountCoin = +user2Balance?.balance
+          amountCoin = floored_val(+user2Balance?.balance, numDecimalDigits)
         }
         //Step 4 : user2 sells coin
-
+        if (amountCoin <= 0) throw new Error("Insufficient balance");
         await _onSellOrderAsync({
           "account-id": user2?.userId,
           price,
@@ -411,7 +440,6 @@ const Home = () => {
           AccessKeyId: user2?.AccessKeyId,
           secretKey: user2?.secretKey,
         });
-        await delay(1000);
         //Step 5 : user1 buys coin
 
         await _onBuyOrder({
@@ -423,29 +451,6 @@ const Home = () => {
           secretKey: user1?.secretKey,
         });
 
-        //  get user1 user information
-        let user1Balances = await getBalanceInfo({
-          userId: user1?.userId,
-          AccessKeyId: user1?.AccessKeyId,
-          secretKey: user1?.secretKey,
-        });
-
-        const user1Balance = user1Balances?.data?.data?.list?.find(
-          (it: any) =>
-            it?.currency === 'gns'
-        );
-          //checking
-        if (+user1Balance?.balance < +amountCoin) {
-          amountCoin = +user1Balance?.balance
-        }
-
-        // if (sellApi.balance < amountCoin) {
-        //   amountCoin = buyer.balance;
-        // }
-        // console.log({
-        //   price,
-        //   amountCoin
-        // })
         count++;
       }
     } catch (err) {

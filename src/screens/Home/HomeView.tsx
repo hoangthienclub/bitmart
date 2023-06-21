@@ -133,7 +133,7 @@ const HomeView = ({
             onChange={(e: any) =>
               setCreateVolumeForm({ ...createVolumeForm, desiredVolume: e?.target?.value })
             }
-            label="Desired Volume"
+            label="Count"
           />
         </div>
         <Button title={"Submit"} onClick={onCreateVolume} />
