@@ -56,7 +56,8 @@ const HomeView = ({
   selectedSymbol,
   onSelectUser,
   onCreateVolume,
-  reloadProfile
+  reloadProfile,
+  swapUser
 }: any) => {
   const [tabActive, setTabActive]: any = useState(
     TAB_ITEMS(selectedSymbol?.["base-currency"])[0]?.key
@@ -192,6 +193,7 @@ const HomeView = ({
             onSelectUser={onSelectUser}
             selectedUser={userId}
             reloadProfile={reloadProfile}
+            {...{ swapUser }}
           />
         )}
       </div>

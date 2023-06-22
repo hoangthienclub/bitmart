@@ -470,6 +470,31 @@ const Home = () => {
       refetchOrders();
     }
   };
+
+  const swapUser = () => {
+    const buyer = JSON.parse(sessionStorage.getItem(STORE_KEYS.BUYER) || "{}");
+    const seller = JSON.parse(sessionStorage.getItem(STORE_KEYS.SELLER) || "{}");
+
+    const buyerState = { ...buyer }
+    const sellerState = { ...seller }
+    setBuyer(sellerState);
+    setSeller(buyerState);
+
+
+    sessionStorage.setItem(
+      STORE_KEYS.BUYER,
+      JSON.stringify({
+        ...seller
+      })
+    );
+    sessionStorage.setItem(
+      STORE_KEYS.SELLER,
+      JSON.stringify({
+        ...buyer
+      })
+    );
+
+  }
   
   return (
     <HomeView
@@ -523,7 +548,8 @@ const Home = () => {
         selectedSymbol,
         onSelectUser,
         onCreateVolume,
-        reloadProfile
+        reloadProfile,
+        swapUser
       }}
     />
   );
