@@ -190,6 +190,21 @@ const Home = () => {
     }
   });
 
+  const { mutate: _onCancelAllOrder } = useMutation(["cancelAllOrder"], API.cancelAllOrder, {
+    onSuccess: (data) => {
+      if (data?.data?.status === "error") {
+        toast(data?.data?.["err-msg"]);
+        throw new Error("Error");
+      } else {
+        refetchOrders();
+      }
+    },
+    onError: (error) => {
+      console.log('error')
+      throw new Error("Error");
+    }
+  });
+
   const { data: historyOrder, refetch: refetchGetHistoryOrder } = useQuery(
     ["getHistoryOrder", { userId }],
     () =>
@@ -350,6 +365,17 @@ const Home = () => {
     _onCancelOrder({
       symbol: selectedSymbol?.symbol as string,
       orderId: id,
+    });
+  };
+
+  const cancelAllOrder = () => {
+    _onCancelAllOrder({
+      userId: userSelectedInfo?.userId,
+      symbol: selectedSymbol?.symbol ?? '',
+      side: 'sell',
+      types: 'sell-limit',
+      AccessKeyId: userSelectedInfo?.AccessKeyId ?? '',
+      secretKey: userSelectedInfo?.secretKey ?? '' ,
     });
   };
 
@@ -541,6 +567,7 @@ const Home = () => {
         onSell,
         isSelling,
         cancelOrder,
+        cancelAllOrder,
         buyer,
         setBuyer,
         seller,

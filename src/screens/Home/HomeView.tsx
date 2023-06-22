@@ -57,7 +57,8 @@ const HomeView = ({
   onSelectUser,
   onCreateVolume,
   reloadProfile,
-  swapUser
+  swapUser,
+  cancelAllOrder,
 }: any) => {
   const [tabActive, setTabActive]: any = useState(
     TAB_ITEMS(selectedSymbol?.["base-currency"])[0]?.key
@@ -228,7 +229,7 @@ const HomeView = ({
       <div className="flex flex-row gap-4 mt-4">
         <div className="flex-1">
           {/* <Balance data={userBalance} /> */}
-          <OpenOrders data={openOrders} cancelOrder={cancelOrder} />
+          <OpenOrders data={openOrders} cancelOrder={cancelOrder} cancelAllOrder={cancelAllOrder}/>
         </div>
 
         <HistoryOrder label="Trade History" data={historyOrder} />

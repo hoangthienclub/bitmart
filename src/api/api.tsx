@@ -70,7 +70,7 @@ const cancelOrder = ({ orderId, symbol }: { orderId: string; symbol: string }) =
 };
 
 const cancelAllOrder = ({ symbol, userId, size, side, types, AccessKeyId, secretKey }: {
-  symbol: string, userId: string, types: 'sell-limit' | 'buy-limit', side: 'sell' | 'buy', size: number, AccessKeyId: string;
+  symbol: string, userId: string, types: 'sell-limit' | 'buy-limit', side: 'sell' | 'buy', size?: number, AccessKeyId: string;
   secretKey: string;
 }) => {
   return baseApi({
