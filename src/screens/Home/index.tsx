@@ -60,7 +60,6 @@ const Home = () => {
     amount: 0,
     desiredVolume: 0
   });
-
   const getUserInfo = () => {
     
     const buyer = JSON.parse(sessionStorage.getItem(STORE_KEYS.BUYER) || "{}");
@@ -410,18 +409,18 @@ const Home = () => {
     )?.balance || 0;
   
     const data = [];
-    for (let price = min; price <= max;  price += step) {
-      if (+userBalance <= amountPerPrice) break;
+    for (let price = +min; price <= +max;  price += (+step)) {
+      if (+userBalance <= +amountPerPrice) break;
       data.push({
         symbol: selectedSymbol?.symbol ?? '',
         price: floored_val(price, numDecimalDigits),
-        amount: amountPerPrice,
+        amount: +amountPerPrice,
         AccessKeyId: userSelectedInfo?.AccessKeyId,
         secretKey: userSelectedInfo?.secretKey,
         "account-id": userSelectedInfo?.userId,
         type: "sell-limit"
       })
-      userBalance = +userBalance - amountPerPrice;
+      userBalance = +userBalance - (+amountPerPrice);
     } 
     const datas = separatedArray(data, itemsPerBatch);
     await Promise.all(datas.map((item: any) => {

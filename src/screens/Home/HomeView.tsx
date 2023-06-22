@@ -95,25 +95,25 @@ const HomeView = ({
           <Input
             type="number"
             value={sellBatchForm?.min}
-            onChange={(e: any) => setSellBatchForm({ ...sellBatchForm, min: +e?.target?.value })}
+            onChange={(e: any) => setSellBatchForm({ ...sellBatchForm, min: e?.target?.value })}
             label="Min"
           />
           <Input
             type="number"
             value={sellBatchForm?.max}
-            onChange={(e: any) => setSellBatchForm({ ...sellBatchForm, max: +e?.target?.value })}
+            onChange={(e: any) => setSellBatchForm({ ...sellBatchForm, max: e?.target?.value })}
             label="Max"
           />
           <Input
             type="number"
             value={sellBatchForm?.amountPerPrice}
-            onChange={(e: any) => setSellBatchForm({ ...sellBatchForm, amountPerPrice: +e?.target?.value })}
+            onChange={(e: any) => setSellBatchForm({ ...sellBatchForm, amountPerPrice: e?.target?.value })}
             label="Amount Per Price"
           />
           <Input
             type="number"
             value={sellBatchForm?.step}
-            onChange={(e: any) => setSellBatchForm({ ...sellBatchForm, step: +e?.target?.value })}
+            onChange={(e: any) => setSellBatchForm({ ...sellBatchForm, step: e?.target?.value })}
             label="Step"
           />
         </div>
