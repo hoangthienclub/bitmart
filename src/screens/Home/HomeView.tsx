@@ -44,10 +44,10 @@ const HomeView = ({
   createVolumeForm,
   setCreateVolumeForm,
   isBuying = false,
-  sellForm,
-  setSellForm,
-  isSelling,
-  onSell,
+  isBatchSelling,
+  onSellBatch,
+  sellBatchForm,
+  setSellBatchForm,
   cancelOrder,
   buyer,
   setBuyer,
@@ -88,24 +88,36 @@ const HomeView = ({
     );
   };
 
-  const renderSellForm = () => {
+  const renderSellBatchForm = () => {
     return (
       <>
         <div className="flex flex-row flex-1 gap-4 my-4">
           <Input
             type="number"
-            value={sellForm?.price}
-            onChange={(e: any) => setSellForm({ ...sellForm, price: e?.target?.value })}
-            label="Price"
+            value={sellBatchForm?.min}
+            onChange={(e: any) => setSellBatchForm({ ...sellBatchForm, min: +e?.target?.value })}
+            label="Min"
           />
           <Input
             type="number"
-            value={sellForm?.amount}
-            onChange={(e: any) => setSellForm({ ...sellForm, amount: e?.target?.value })}
-            label="Amount"
+            value={sellBatchForm?.max}
+            onChange={(e: any) => setSellBatchForm({ ...sellBatchForm, max: +e?.target?.value })}
+            label="Max"
+          />
+          <Input
+            type="number"
+            value={sellBatchForm?.amountPerPrice}
+            onChange={(e: any) => setSellBatchForm({ ...sellBatchForm, amountPerPrice: +e?.target?.value })}
+            label="Amount Per Price"
+          />
+          <Input
+            type="number"
+            value={sellBatchForm?.step}
+            onChange={(e: any) => setSellBatchForm({ ...sellBatchForm, step: +e?.target?.value })}
+            label="Step"
           />
         </div>
-        <Button title={"Sell"} loading={isSelling} disabled={isSelling} onClick={onSell} />
+        <Button title={"Sell"} loading={isBatchSelling} disabled={isBatchSelling} onClick={onSellBatch} />
       </>
     );
   };
@@ -218,7 +230,7 @@ const HomeView = ({
                     case 1:
                       return renderCreateVolumeForm();
                     case 2:
-                      return renderSellForm();
+                      return renderSellBatchForm();
                   }
                 })()}
               </div>

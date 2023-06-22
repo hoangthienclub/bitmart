@@ -61,6 +61,10 @@ const sellOrder = (params: ISellBuy) => {
   return baseApi({ url: apis.buy, method: "POST", params: { ...params, type: "sell-limit" } });
 };
 
+const sellBatchOrder = (params: ISellBuy[]) => {
+  return baseApi({ url: apis.placeBatchOrder, method: "POST", params });
+};
+
 const cancelOrder = ({ orderId, symbol }: { orderId: string; symbol: string }) => {
   return baseApi({
     url: apis.cancel(orderId),
@@ -90,7 +94,8 @@ const API = {
   buyOrder,
   sellOrder,
   cancelOrder,
-  cancelAllOrder
+  cancelAllOrder,
+  sellBatchOrder,
 }
 
 export default API

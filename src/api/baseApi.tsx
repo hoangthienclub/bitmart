@@ -89,7 +89,7 @@ const baseApi = async ({
     url: parseUrl,
     method,
     ...(method === "POST" && {
-      data: PostParam,
+      data: !params?.length ? PostParam : params,
     }),
   };
   const data = await axios(config);

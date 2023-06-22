@@ -8,10 +8,12 @@ import variables from "../../api/variable";
 import { inflate } from "pako";
 import { toast } from "react-toastify";
 import allSymbolData from "../../utils/allSymbol";
-import { delay, floored_val } from "../../utils/helper";
+import { delay, floored_val, separatedArray } from "../../utils/helper";
 
 let ws: any;
 let preSymbol: any = null;
+const numDecimalDigits = 4;
+const itemsPerBatch = 10;
 
 const defaultUserInfo = {
   AccessKeyId: "",
@@ -43,6 +45,13 @@ const Home = () => {
   const [sellForm, setSellForm] = useState({
     price: 0,
     amount: 0,
+  });
+
+  const [sellBatchForm, setSellBatchForm] = useState({
+    min: 0,
+    max: 0,
+    amountPerPrice: 0,
+    step: 0,
   });
 
   const [createVolumeForm, setCreateVolumeForm] = useState({
@@ -175,6 +184,16 @@ const Home = () => {
     },
   });
 
+  const { isLoading: isBatchSelling, mutate: _onSellBatchOrder } = useMutation(["sellOrder"], API.sellBatchOrder, {
+    onSuccess: (data) => {
+      if (data?.data?.status === "error") {
+        toast(data?.data?.["err-msg"]);
+      } else {
+        refetchOrders();
+      }
+    },
+  });
+
   const { mutate: _onCancelOrder } = useMutation(["cancelOrder"], API.cancelOrder, {
     onSuccess: (data) => {
       if (data?.data?.status === "error") {
@@ -241,7 +260,7 @@ const Home = () => {
   //   ]);
   // };
 
-  const {} = useQuery(["getAllSymbol"], () => API.getAllSymbol(), {
+  const _ = useQuery(["getAllSymbol"], () => API.getAllSymbol(), {
     onSuccess: (data) =>
       localStorage.setItem(STORE_KEYS?.ALL_SYMBOL, JSON.stringify(data?.data?.data)),
     enabled: !!userId,
@@ -257,7 +276,7 @@ const Home = () => {
 
   const initSocket = () => {
     ws = new WebSocket(variables.WS_URL);
-    ws.onopen = function open() {};
+    ws.onopen = function open() { console.log("")};
     ws.onmessage = function (data: any) {
       const fileReader = new FileReader();
       fileReader.onload = function (event: any) {
@@ -338,6 +357,14 @@ const Home = () => {
   };
 
   const onBuy = () => {
+    if (!userId) {
+      toast("Please select user");
+      return;
+    }
+    if (!selectedSymbol) {
+      toast("Please select symbol");
+      return;
+    }
     _onBuyOrder({
       symbol: selectedSymbol?.symbol ?? "",
       price: buyForm?.price,
@@ -349,15 +376,57 @@ const Home = () => {
     refetchOrders();
   };
 
-  const onSell = () => {
-    _onSellOrder({
-      symbol: selectedSymbol?.symbol ?? '',
-      price: sellForm?.price,
-      amount: sellForm.amount,
+  // const onSell = () => {
+  //   _onSellOrder({
+  //     symbol: selectedSymbol?.symbol ?? '',
+  //     price: sellForm?.price,
+  //     amount: sellForm.amount,
+  //     AccessKeyId: userSelectedInfo?.AccessKeyId,
+  //     secretKey: userSelectedInfo?.secretKey,
+  //     "account-id": userSelectedInfo?.userId,
+  //   });
+  //   refetchOrders();
+  // };
+
+  const onSellBatch = async () => {
+    if (!userId) {
+      toast("Please select user");
+      return;
+    }
+    if (!selectedSymbol) {
+      toast("Please select symbol");
+      return;
+    }
+    const { min, max, amountPerPrice, step } = sellBatchForm;
+    
+    const userBalances = await getBalanceInfo({
+      userId: userSelectedInfo?.userId,
       AccessKeyId: userSelectedInfo?.AccessKeyId,
       secretKey: userSelectedInfo?.secretKey,
-      "account-id": userSelectedInfo?.userId,
     });
+    let userBalance = +userBalances?.data?.data?.list?.find(
+      (it: any) =>
+        it?.currency === selectedSymbol?.["base-currency"]
+    )?.balance || 0;
+  
+    const data = [];
+    for (let price = min; price <= max;  price += step) {
+      if (+userBalance <= amountPerPrice) break;
+      data.push({
+        symbol: selectedSymbol?.symbol ?? '',
+        price: floored_val(price, numDecimalDigits),
+        amount: amountPerPrice,
+        AccessKeyId: userSelectedInfo?.AccessKeyId,
+        secretKey: userSelectedInfo?.secretKey,
+        "account-id": userSelectedInfo?.userId,
+        type: "sell-limit"
+      })
+      userBalance = +userBalance - amountPerPrice;
+    } 
+    const datas = separatedArray(data, itemsPerBatch);
+    await Promise.all(datas.map((item: any) => {
+      _onSellBatchOrder(item);
+    }))
     refetchOrders();
   };
 
@@ -389,7 +458,6 @@ const Home = () => {
   const onCreateVolume = async () => {
     setCreateVolLoading(true)
     const { min, max, amount, desiredVolume } = createVolumeForm;
-    const numDecimalDigits = 4;
     const user1=  seller;
     const user2 = buyer;
     
@@ -562,10 +630,10 @@ const Home = () => {
         setCreateVolumeForm,
         onBuy,
         isBuying,
-        sellForm,
-        setSellForm,
-        onSell,
-        isSelling,
+        sellBatchForm,
+        setSellBatchForm,
+        onSellBatch,
+        isBatchSelling,
         cancelOrder,
         cancelAllOrder,
         buyer,
