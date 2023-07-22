@@ -5,7 +5,7 @@ import { useMutation, useQuery } from "react-query";
 import API from "../../api/api";
 import { ISymbol } from "../../interface";
 import variables from "../../api/variable";
-import { inflate } from "pako";
+import { inflate, inflateRaw } from "pako";
 import { toast } from "react-toastify";
 import allSymbolData from "../../utils/allSymbol";
 import { delay, floored_val, separatedArray } from "../../utils/helper";
@@ -87,40 +87,50 @@ const Home = () => {
     }
   }, [userId]);
 
-  const { data: userBalance, mutateAsync: getBalanceInfo } = useMutation(
-    ["getAccountBalance"],
-    API.getAccountBalance
-  );
+  // const { data: userBalance, mutateAsync: getBalanceInfo } = useMutation(
+  //   ["getAccountBalance"],
+  //   API.getAccountBalance
+  // );
+  const { data: a, mutateAsync: getAllSymbol } = useMutation(
+    ["getAllSymbol"],
+    API.getAllSymbol,
+  )
+  // API.getAllSymbol(), {
+  //   onSuccess: (data) =>
+  //     localStorage.setItem(STORE_KEYS?.ALL_SYMBOL, JSON.stringify(data?.data?.data)),
+  //   enabled: !!userId,
+  // });
 
   const { isLoading: onLoadingLogin, mutate: _onLogin } = useMutation(
     ["getUserInfo"],
     API.getUserInfo,
     {
       onSuccess: async (data, params) => {
-        // console.log("getUserInfo", params, data);
+        console.log("getUserInfo", params, data);
         
         if (data?.data?.status === "error") {
           toast(data?.data?.["err-msg"]);
         } else {
-          const balances = await getBalanceInfo({
-            userId: data?.data?.data?.[0]?.id,
-            AccessKeyId: params?.AccessKeyId,
-            secretKey: params?.secretKey,
-          });
+          const symbols = await getAllSymbol();
+          // const balances = await getBalanceInfo({
+          //   userId: data?.data?.data?.[0]?.id,
+          //   AccessKeyId: params?.AccessKeyId,
+          //   secretKey: params?.secretKey,
+          // });
           if (params?.type === "buyer") {
             setBuyer({
               ...buyer,
               ...params,
-              userId: data?.data?.data?.[0]?.id,
-              balances: balances?.data?.data?.list,
+              userId: params.AccessKeyId,
+              balances: data?.data?.data?.wallet,
             });
             sessionStorage.setItem(
               STORE_KEYS.BUYER,
               JSON.stringify({
                 ...buyer,
                 ...params,
-                userId: data?.data?.data?.[0]?.id,
-                balances: balances?.data?.data?.list,
+                userId: params.AccessKeyId,
+                balances: data?.data?.data?.list,
               })
             );
           }
@@ -128,16 +138,16 @@ const Home = () => {
             setSeller({
               ...seller,
               ...params,
-              userId: data?.data?.data?.[0]?.id,
-              balances: balances?.data?.data?.list,
+              userId: params.AccessKeyId,
+              balances: data?.data?.data?.list,
             });
             sessionStorage.setItem(
               STORE_KEYS.SELLER,
               JSON.stringify({
                 ...seller,
                 ...params,
-                userId: data?.data?.data?.[0]?.id,
-                balances: balances?.data?.data?.list,
+                userId: params.AccessKeyId,
+                balances: data?.data?.data?.list,
               })
             );
           }
@@ -240,28 +250,9 @@ const Home = () => {
     { enabled: !!userId }
   );
 
-  // const getOpenOrder = async () => {
-  //   const buys = onGetOpenOrder({
-  //     "account-id": userId,
-  //     // symbol: selectedSymbol?.symbol,
-  //     // side: "buy",
-  //   });
-  //   const sells = onGetOpenOrder({
-  //     "account-id": userId,
-  //     // symbol: selectedSymbol?.symbol,
-  //     // side: "buy",
-  //   });
-  //   const [buysData, sellsData] = await Promise.all([buys, sells]);
-
-  //   setOpenOrders([
-  //     ...buysData?.data?.data?.map((it: any) => ({ ...it, side: "buy" })),
-  //     ...sellsData?.data?.data?.map((it: any) => ({ ...it, side: "sell" })),
-  //   ]);
-  // };
-
   const _ = useQuery(["getAllSymbol"], () => API.getAllSymbol(), {
     onSuccess: (data) =>
-      localStorage.setItem(STORE_KEYS?.ALL_SYMBOL, JSON.stringify(data?.data?.data)),
+      localStorage.setItem(STORE_KEYS?.ALL_SYMBOL, JSON.stringify(data?.data?.data?.symbols)),
     enabled: !!userId,
   });
 
@@ -280,7 +271,7 @@ const Home = () => {
       const fileReader = new FileReader();
       fileReader.onload = function (event: any) {
         const convertedData = event.target.result;
-        const text: any = inflate(convertedData, {
+        const text: any = inflateRaw(convertedData, {
           to: "string",
         });
         const msg: any = JSON.parse(text);
@@ -290,7 +281,7 @@ const Home = () => {
               pong: msg.ping,
             })
           );
-        } else if (msg.tick) {
+        } else if (msg.data) {
           handle(msg);
         } else {
           console.log(text);
@@ -311,8 +302,8 @@ const Home = () => {
     // const symbol = data.ch.split(".")[1];
     // const channel = data.ch.split(".")[2];
     // const { asks, bids } = data.tick ?? {}
-    setOrdersBook(data.tick);
-    // setOrders({
+    setOrdersBook(data.data);
+    // setOrders(
     //     open:asks,
     //     history: bids
     // })
@@ -336,9 +327,8 @@ const Home = () => {
   const subscribe = (ws: any) => {
     ws.send(
       JSON.stringify({
-        sub: `market.${selectedSymbol?.symbol}.depth.step0`,
-        step: "step0",
-        symbol: `${selectedSymbol?.symbol}`,
+        op: "subscribe",
+        args: [`spot/depth20:${selectedSymbol?.symbol}`]
       })
     );
   };
@@ -348,7 +338,7 @@ const Home = () => {
     : allSymbolData;
 
   const searchedSymbol =
-    searchValue !== "" ? allSymbol?.filter((it: ISymbol) => it?.symbol?.includes(searchValue)) : [];
+    searchValue !== "" ? allSymbol?.filter((it: ISymbol) => it?.symbol?.toLowerCase()?.includes(searchValue?.toLowerCase())) : [];
 
   const onSelectSymbol = (it: ISymbol) => {
     preSymbol = selectedSymbol;
@@ -405,7 +395,7 @@ const Home = () => {
     });
     let userBalance = +userBalances?.data?.data?.list?.find(
       (it: any) =>
-        it?.currency === selectedSymbol?.["base-currency"]
+        it?.currency === selectedSymbol?.["base_currency"]
     )?.balance || 0;
   
     const data = [];
@@ -483,7 +473,7 @@ const Home = () => {
 
         const user1Balance = user1Balances?.data?.data?.list?.find(
           (it: any) =>
-            it?.currency === selectedSymbol?.["base-currency"]
+            it?.currency === selectedSymbol?.["base_currency"]
         );
           //checking
         if (+user1Balance?.balance < +amountCoin) {
@@ -516,7 +506,7 @@ const Home = () => {
         });
         const user2Balance = user2Balances?.data?.data?.list?.find(
           (it: any) =>
-            it?.currency === selectedSymbol?.["base-currency"]
+            it?.currency === selectedSymbol?.["base_currency"]
         );
         if (+user2Balance?.balance < +amountCoin) {
           amountCoin = floored_val(+user2Balance?.balance, numDecimalDigits)

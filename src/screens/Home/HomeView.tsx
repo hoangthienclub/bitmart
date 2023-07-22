@@ -61,10 +61,10 @@ const HomeView = ({
   cancelAllOrder,
 }: any) => {
   const [tabActive, setTabActive]: any = useState(
-    TAB_ITEMS(selectedSymbol?.["base-currency"])[0]?.key
+    TAB_ITEMS(selectedSymbol?.["base_currency"])[0]?.key
   );
 
-  const quoteCurrency= selectedSymbol?.["quote-currency"]??''
+  const quoteCurrency= selectedSymbol?.["quote_currency"]??''
 
   const renderBuyForm = () => {
     return (
@@ -219,7 +219,7 @@ const HomeView = ({
             <>
               <Tabs
                 value={tabActive}
-                tabs={TAB_ITEMS(selectedSymbol?.["base-currency"])}
+                tabs={TAB_ITEMS(selectedSymbol?.["base_currency"])}
                 onChange={setTabActive}
               />
               <div className="flex-grow">

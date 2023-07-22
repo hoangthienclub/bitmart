@@ -32,10 +32,10 @@ const getUserInfo = ({
 };
 
 const getHistoryOrder = (params: any) => {
-  return baseApi({ url: apis.orderHistory, params })
+  return baseApi({ url: apis.orderHistory, method: "POST", params: {} })
 }
 const getOpenOrder = (params: any) => {
-  return baseApi({ url: apis.openOrders, params })
+  return baseApi({ url: apis.openOrders, method: "POST", params: {} })
 }
 
 const getAccountBalance = ({

@@ -31,14 +31,14 @@ const Profile = ({
     symbol &&
     sellerBalances?.filter(
       (it: any) =>
-        [symbol?.["base-currency"], symbol?.["quote-currency"]]?.includes(it?.currency) &&
+        [symbol?.["base_currency"], symbol?.["quote_currency"]]?.includes(it?.currency) &&
         it?.type === "trade"
     );
   const selectedBuyerBalance =
     symbol &&
     buyerBalances?.filter(
       (it: any) =>
-        [symbol?.["base-currency"], symbol?.["quote-currency"]]?.includes(it?.currency) &&
+        [symbol?.["base_currency"], symbol?.["quote_currency"]]?.includes(it?.currency) &&
         it?.type === "trade"
     );
 

@@ -11,10 +11,10 @@ const OrderBooks = ({
   data?: any;
   selectedSymbol: ISymbol;
 }) => {
-  const { bids, asks } = data ?? {};
+  const { bids, asks } = data?.[0] ?? {};
 
   const currency = selectedSymbol?.symbol
-    ? selectedSymbol?.["base-currency"] + ' - ' + selectedSymbol?.["quote-currency"]
+    ? selectedSymbol?.["base_currency"] + ' - ' + selectedSymbol?.["quote_currency"]
     : "";
 
   return (

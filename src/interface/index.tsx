@@ -1,28 +1,16 @@
 export interface ISymbol {
-  "base-currency": string;
-  "quote-currency": string;
-  "price-precision": number;
-  "amount-precision": number;
-  "symbol-partition": string;
-  symbol: string;
-  state: string;
-  "value-precision": number;
-  "min-order-amt": number;
-  "max-order-amt": number;
-  "min-order-value": number;
-  "limit-order-min-order-amt": number;
-  "limit-order-max-order-amt": number;
-  "limit-order-max-buy-amt": number;
-  "limit-order-max-sell-amt": number;
-  "buy-limit-must-less-than": number;
-  "sell-limit-must-greater-than": number;
-  "sell-market-min-order-amt": number;
-  "sell-market-max-order-amt": number;
-  "buy-market-max-order-value": number;
-  "market-sell-order-rate-must-less-than": number;
-  "market-buy-order-rate-must-less-than": number;
-  "api-trading": string;
-  tags: string;
+  symbol: string
+  symbol_id: number
+  base_currency: string
+  quote_currency: string
+  quote_increment: string
+  base_min_size: string
+  price_min_precision: number
+  price_max_precision: number
+  expiration: string
+  min_buy_amount: string
+  min_sell_amount: string
+  trade_status: string
 }
 
 export interface IOpenOrder {
