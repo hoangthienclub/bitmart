@@ -19,6 +19,7 @@ const defaultUserInfo = {
   AccessKeyId: "",
   secretKey: "",
   userId: "",
+  userName: "",
   balances: [],
 };
 
@@ -67,10 +68,10 @@ const Home = () => {
 
     // const secretKey = sessionStorage.getItem(STORE_KEYS.secretKey);
     if (buyer?.userId) {
-      _onLogin({ AccessKeyId: buyer?.AccessKeyId, secretKey: buyer?.secretKey, type: "buyer" });
+      _onLogin({ AccessKeyId: buyer?.AccessKeyId, secretKey: buyer?.secretKey, type: "buyer", userName: buyer?.userName });
     }
     if (seller?.userId) {
-      _onLogin({ AccessKeyId: seller?.AccessKeyId, secretKey: seller?.secretKey, type: "seller" });
+      _onLogin({ AccessKeyId: seller?.AccessKeyId, secretKey: seller?.secretKey, type: "seller", userName: seller?.userName  });
     }
   };
 
@@ -116,6 +117,7 @@ const Home = () => {
               ...params,
               userId: params.AccessKeyId,
               balances: data?.data?.data?.wallet,
+              userName: params.userName,
             });
             sessionStorage.setItem(
               STORE_KEYS.BUYER,
@@ -124,6 +126,7 @@ const Home = () => {
                 ...params,
                 userId: params.AccessKeyId,
                 balances: data?.data?.data?.list,
+                userName: params.userName,
               })
             );
           }
@@ -133,6 +136,7 @@ const Home = () => {
               ...params,
               userId: params.AccessKeyId,
               balances: data?.data?.data?.list,
+              userName: params.userName,
             });
             sessionStorage.setItem(
               STORE_KEYS.SELLER,
@@ -141,6 +145,7 @@ const Home = () => {
                 ...params,
                 userId: params.AccessKeyId,
                 balances: data?.data?.data?.list,
+                userName: params.userName,
               })
             );
           }
@@ -433,6 +438,7 @@ const Home = () => {
   const onSelectUser = (userInfo: any) => {
     sessionStorage.setItem(STORE_KEYS.AccessKeyId, userInfo?.AccessKeyId);
     sessionStorage.setItem(STORE_KEYS.secretKey, userInfo?.secretKey);
+    sessionStorage.setItem(STORE_KEYS.userName, userInfo?.userName);
     setUserId(userInfo?.userId);
     setUserSelectedInfo(userInfo)
   };

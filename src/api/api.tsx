@@ -16,26 +16,28 @@ const getAllSymbol = () => {
 const getUserInfo = ({
   AccessKeyId,
   secretKey,
-  type
+  type,
+  userName,
 }: {
   AccessKeyId: string;
   secretKey: string;
   type: string;
+  userName: string;
 }) => {
   console.log("type===========>", AccessKeyId, secretKey, type);
   
   return baseApi({
     url: apis.accountInfo,
-    params: { AccessKeyId: AccessKeyId, secretKey },
+    userKey: { AccessKeyId, secretKey, userName },
     // isLogin: true,
   });
 };
 
-const getHistoryOrder = (params: any) => {
-  return baseApi({ url: apis.orderHistory, method: "POST", params: {} })
+const getHistoryOrder = (userKey: any, body: any) => {
+  return baseApi({ url: apis.orderHistory, method: "POST", body: {}, userKey })
 }
-const getOpenOrder = (params: any) => {
-  return baseApi({ url: apis.openOrders, method: "POST", params: {} })
+const getOpenOrder = (userKey: any, body: any) => {
+  return baseApi({ url: apis.openOrders, method: "POST", body: {}, userKey })
 }
 
 const getAccountBalance = ({

@@ -6,70 +6,78 @@ import STORE_KEYS from "../utils/constant";
 import moment from "moment";
 import { toast } from "react-toastify";
 
-const API_KEY = '286e00c507f81f10c8b95b894a30d30e0202c242';
-const API_SECRET = '438f119328aa872b0d9260162625d49027798eb43d6f07f390400800c747f891';
-const API_MEMO = 'Test';
-
 const BASE_URL = 'https://api-cloud.bitmart.com';
 
-// Get current timestamp
+function get_timestamp() {
+  return new Date().getTime().toString();
+}
 
-
-function generate_signature(timestamp: string, body: any) {
-  const message = `${timestamp}#${API_MEMO}#${body}`;
-  const hmac = cryptoJS.HmacSHA256(message, API_SECRET);
+function generateSignature(timestamp: string, body: string, apiMemo?: string, apiSecret?: string,){
+  // const message = `${timestamp}#${apiMemo}#${body}`;
+  const message = `${timestamp}#Test#${body}`;
+  console.log({message})
+  const hmac = cryptoJS.HmacSHA256(message, "438f119328aa872b0d9260162625d49027798eb43d6f07f390400800c747f89");
+  // const hmac = cryptoJS.HmacSHA256(message, apiSecret || "");
   return cryptoJS.enc.Hex.stringify(hmac);
 }
 
 const baseApi = async ({
   url,
   params,
+  body = {},
   method = "GET",
-  // isLogin = false,
+  userKey,
 }: {
   url: string;
   params?: any;
+  body?: any;
+  userKey?: { AccessKeyId: string, secretKey: string, userName: string };
   method?: "GET" | "POST";
-  // isLogin?: boolean;
 }) => {
   const { DEFAULT_PARAMS } = variables ?? {};
-  let secretKey;
+  const apiMemo = userKey?.userName ?? sessionStorage.getItem(STORE_KEYS.userName) ?? "";
+  const secretKey = userKey?.secretKey ?? sessionStorage.getItem(STORE_KEYS.secretKey) ?? "";
+  const timestamp = get_timestamp();
 
   const headers: any = {
     ...DEFAULT_PARAMS,
+    'X-BM-TIMESTAMP': timestamp
   };
+  console.log({body})
 
-  if (params?.secretKey) secretKey = params?.secretKey;
-  else secretKey = sessionStorage.getItem(STORE_KEYS.secretKey);
+  if (userKey?.AccessKeyId) headers['X-BM-KEY'] = userKey?.AccessKeyId;
+  else headers['X-BM-KEY'] = sessionStorage.getItem(STORE_KEYS.AccessKeyId);
 
-  delete headers?.secretKey; 
-  if (params?.AccessKeyId) headers.AccessKeyId = params?.AccessKeyId;
-  else headers.AccessKeyId = sessionStorage.getItem(STORE_KEYS.AccessKeyId);
+  let xBmsign;
+  if (method !== "GET") {
+    xBmsign = generateSignature(timestamp, JSON.stringify(body), apiMemo, secretKey);
+  }
 
-  const PostParam = { ...params };
-  const xBmsign = generate_signature(headers["X-BM-TIMESTAMP"], JSON.stringify(params));
-  delete PostParam?.secretKey;
-  delete PostParam.AccessKeyId
-
-  const parseUrl = `${BASE_URL}/${url}` ;
+  const parseUrl = `${BASE_URL}/${url}`;
 
   const config = {
     url: parseUrl,
     method,
     ...(method === "POST" && {
-      data: !params?.length ? PostParam : params,
+      data: body,
     }),
     headers: {
       ...headers,
+      "X-BM-KEY": "286e00c507f81f10c8b95b894a30d30e0202c242",
       "X-BM-SIGN": xBmsign,
     }
   };
-  const data = await axios(config);
-  if (data?.data?.status === 'error') {
-    toast(data?.data?.["err-msg"]);
-    return Promise.reject(data)
+  try {
+    const data = await axios(config);
+    if (data?.data?.status === 'error') {
+      toast(data?.data?.["err-msg"]);
+      return Promise.reject(data)
+    }
+    else return Promise.resolve(data)
+  } catch (err) {
+    toast("Invalid API Key or Secret Key");
+    throw err;
   }
-  else return Promise.resolve(data)
 };
 
 export default baseApi;

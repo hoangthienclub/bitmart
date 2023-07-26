@@ -1,14 +1,3 @@
-import moment from "moment";
-const API_KEY = '286e00c507f81f10c8b95b894a30d30e0202c242';
-const API_SECRET = '438f119328aa872b0d9260162625d49027798eb43d6f07f390400800c747f891';
-const API_MEMO = 'Test';
-
-const BASE_URL = 'https://api-cloud.bitmart.com';
-function get_timestamp() {
-  return new Date().getTime().toString();
-}
-
-const host = 'api.huobi.pro';
 const apis = {
   openOrders: "spot/v4/query/open-orders",
   orderHistory: "spot/v4/query/history-orders",
@@ -21,19 +10,16 @@ const apis = {
 };
 const method = 'GET';
 
-
 const DEFAULT_PARAMS = {
-    'Content-Type': 'application/json',
-    'X-BM-KEY': API_KEY,
-    'X-BM-TIMESTAMP': get_timestamp(),
+    'Content-Type': 'application/json',   
 };
+
 const WS_URL = "wss://ws-manager-compress.bitmart.com/api?protocol=1.1";
 
 const variables = {
     method,
     DEFAULT_PARAMS,
     apis,
-    host,
     WS_URL
 
 }
