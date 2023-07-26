@@ -106,17 +106,10 @@ const Home = () => {
     API.getUserInfo,
     {
       onSuccess: async (data, params) => {
-        console.log("getUserInfo", params, data);
-        
         if (data?.data?.status === "error") {
           toast(data?.data?.["err-msg"]);
         } else {
           const symbols = await getAllSymbol();
-          // const balances = await getBalanceInfo({
-          //   userId: data?.data?.data?.[0]?.id,
-          //   AccessKeyId: params?.AccessKeyId,
-          //   secretKey: params?.secretKey,
-          // });
           if (params?.type === "buyer") {
             setBuyer({
               ...buyer,
