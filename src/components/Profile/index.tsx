@@ -31,15 +31,13 @@ const Profile = ({
     symbol &&
     sellerBalances?.filter(
       (it: any) =>
-        [symbol?.["base_currency"], symbol?.["quote_currency"]]?.includes(it?.currency) &&
-        it?.type === "trade"
+        [symbol?.["base_currency"], symbol?.["quote_currency"]]?.includes(it?.currency)
     );
   const selectedBuyerBalance =
     symbol &&
     buyerBalances?.filter(
       (it: any) =>
-        [symbol?.["base_currency"], symbol?.["quote_currency"]]?.includes(it?.currency) &&
-        it?.type === "trade"
+        [symbol?.["base_currency"], symbol?.["quote_currency"]]?.includes(it?.currency)
     );
 
   const renderUserInfo = ({ label, balances, userInfo }: any) => {
@@ -55,7 +53,7 @@ const Profile = ({
             (
             {balances?.map((balance: any) => (
               <div className="mr-2">
-                {formatNumber(balance?.balance)} {balance?.currency}
+                {formatNumber(balance?.available)} {balance?.currency}
               </div>
             ))}
             )
