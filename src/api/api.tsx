@@ -10,10 +10,10 @@ interface ISellBuy {
   "account-id": string;
 }
 
-const getAllSymbol = () => {
-  return baseApi({ url: apis.allSymbol, params: {} })
+const getAllSymbol = (params: any) => {
+  return baseApi({ url: apis.allSymbol, params })
 }
-const getUserInfo = ({
+const getUserInfo = async ({
   AccessKeyId,
   secretKey,
   type,
@@ -25,11 +25,14 @@ const getUserInfo = ({
   userName: string;
 }) => {
   console.log("type===========>", AccessKeyId, secretKey, type);
-  
+  await baseApi({
+    method: "POST",
+    url: apis.openOrders,
+    params: { AccessKeyId, secretKey, userName }, 
+  })
   return baseApi({
     url: apis.accountInfo,
-    userKey: { AccessKeyId, secretKey, userName },
-    // isLogin: true,
+    params: { AccessKeyId, secretKey, userName },
   });
 };
 

@@ -110,7 +110,8 @@ const Home = () => {
         if (data?.data?.status === "error") {
           toast(data?.data?.["err-msg"]);
         } else {
-          const symbols = await getAllSymbol();
+          const symbols = await getAllSymbol(params);
+          localStorage.setItem(STORE_KEYS?.ALL_SYMBOL, JSON.stringify(symbols?.data?.data?.symbols));
           if (params?.type === "buyer") {
             setBuyer({
               ...buyer,
@@ -125,7 +126,7 @@ const Home = () => {
                 ...buyer,
                 ...params,
                 userId: params.AccessKeyId,
-                balances: data?.data?.data?.list,
+                balances: data?.data?.data?.wallet,
                 userName: params.userName,
               })
             );
@@ -135,7 +136,7 @@ const Home = () => {
               ...seller,
               ...params,
               userId: params.AccessKeyId,
-              balances: data?.data?.data?.list,
+              balances: data?.data?.data?.wallet,
               userName: params.userName,
             });
             sessionStorage.setItem(
@@ -144,7 +145,7 @@ const Home = () => {
                 ...seller,
                 ...params,
                 userId: params.AccessKeyId,
-                balances: data?.data?.data?.list,
+                balances: data?.data?.data?.wallet,
                 userName: params.userName,
               })
             );
@@ -543,10 +544,10 @@ const Home = () => {
 
   const reloadProfile = () => {
     if (buyer?.userId) {
-      _onLogin({ AccessKeyId: buyer?.AccessKeyId, secretKey: buyer?.secretKey, type: "buyer" });
+      _onLogin({ AccessKeyId: buyer?.AccessKeyId, secretKey: buyer?.secretKey, type: "buyer", userName: buyer?.userName });
     }
     if (seller?.userId) {
-      _onLogin({ AccessKeyId: seller?.AccessKeyId, secretKey: seller?.secretKey, type: "seller" });
+      _onLogin({ AccessKeyId: seller?.AccessKeyId, secretKey: seller?.secretKey, type: "seller", userName: seller?.userName });
     }
     if(userSelectedInfo?.userId){
       refetchOrders();
