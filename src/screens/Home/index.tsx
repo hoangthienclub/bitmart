@@ -264,8 +264,17 @@ const Home = () => {
   };
 
   const initSocket = () => {
+    
+
     ws = new WebSocket(variables.WS_URL);
-    ws.onopen = function open() { console.log("")};
+    ws.onopen = function open() {
+      const sendPing = () => {
+        if (ws.readyState === WebSocket.OPEN) {
+          ws.send('ping');
+        }
+      }
+      setInterval(sendPing, 10000);
+    };
     ws.onmessage = function (data: any) {
       const fileReader = new FileReader();
       fileReader.onload = function (event: any) {
@@ -286,13 +295,15 @@ const Home = () => {
           console.log(text);
         }
       };
-
-      fileReader.readAsArrayBuffer(data.data);
+      if (data?.data) {
+        fileReader.readAsArrayBuffer(data.data);
+      }
     };
     ws.onerror = function error(err: any) {
       console.log(err);
     };
     ws.onclose = function error(err: any) {
+      console.log("close")
       console.log(err);
     };
   };
@@ -318,7 +329,8 @@ const Home = () => {
     if (preSymbol)
       ws.send(
         JSON.stringify({
-          unsub: `market.${preSymbol?.symbol}.depth.step0`,
+          op: "unsubscribe",
+          args: [`spot/depth20:${preSymbol?.symbol}`]
         })
       );
   }
@@ -354,12 +366,16 @@ const Home = () => {
       return;
     }
     _onBuyOrder({
-      symbol: selectedSymbol?.symbol ?? "",
-      price: buyForm?.price,
-      amount: buyForm.amount,
-      AccessKeyId: userSelectedInfo?.AccessKeyId,
-      secretKey: userSelectedInfo?.secretKey,
-      "account-id": userSelectedInfo?.userId,
+      body: {
+        symbol: selectedSymbol?.symbol ?? "",
+        side: "buy",
+        type:"limit",
+        price: buyForm?.price,
+        size: buyForm.amount,
+      },
+      userInfo: {
+        AccessKeyId: userSelectedInfo?.AccessKeyId, secretKey: userSelectedInfo?.secretKey, userName: userSelectedInfo?.userName 
+      }
     });
     refetchOrders();
   };

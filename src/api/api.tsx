@@ -28,7 +28,7 @@ const getUserInfo = async ({
   await baseApi({
     method: "POST",
     url: apis.openOrders,
-    params: { AccessKeyId, secretKey, userName }, 
+    params: { AccessKeyId, secretKey, userName },
   })
   return baseApi({
     url: apis.accountInfo,
@@ -58,8 +58,8 @@ const getAccountBalance = ({
   });
 };
 
-const buyOrder = (params: ISellBuy) => {
-  return baseApi({ url: apis.buy, method: "POST", params: { ...params, type: "buy-limit" } });
+const buyOrder = (params: { body: any, userInfo: any }) => {
+  return baseApi({ url: apis.buy, method: "POST", body: params.body, params: params.userInfo });
 };
 
 const sellOrder = (params: ISellBuy) => {
