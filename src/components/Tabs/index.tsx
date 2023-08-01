@@ -16,6 +16,7 @@ const Tabs = ({
         {tabs?.map((it: { key: string | number; label: string }, index: number) => {
           return (
             <div
+              key={index}
               onClick={() => onChange(it?.key)}
               className={`${
                 value === it?.key ? "dark:bg-gray-400" : "dark:bg-gray-700"

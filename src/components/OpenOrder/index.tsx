@@ -11,7 +11,7 @@ const OpenOrders = ({
 }: {
   label?: string;
   data?: IOpenOrder[];
-  cancelOrder: (id: string | number) => void;
+  cancelOrder: (id: string | number, symbol: string) => void;
   cancelAllOrder: () => void;
 }) => {
   const sortedData = data?.sort(
@@ -87,7 +87,7 @@ const OpenOrders = ({
                 <td
                   className={`px-6 py-4 ${type === "buy-limit" ? "text-green-500" : "text-red-500"
                     }`}>
-                  <Button onClick={() => cancelOrder(it?.id)} title={"Cancel"} />
+                  <Button onClick={() => cancelOrder(it?.orderId, it?.symbol)} title={"Cancel"} />
                 </td>
               </tr>
             );

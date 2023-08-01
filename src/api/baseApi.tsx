@@ -28,6 +28,9 @@ const baseApi = async ({
   const accessKeyId = params?.AccessKeyId ?? sessionStorage.getItem(STORE_KEYS.AccessKeyId);
   const userName = params?.userName ?? sessionStorage.getItem(STORE_KEYS.userName);
   const timestamp = new Date().getTime().toString();
+  if (!secretKey || !accessKeyId) {
+    return;
+  }
 
   const headers: any = {
     ...DEFAULT_PARAMS,
@@ -57,9 +60,12 @@ const baseApi = async ({
       return Promise.reject(data)
     }
     else return Promise.resolve(data)
-  } catch (err) {
-    toast("Invalid API Key or Secret Key");
-    console.log(err);
+  } catch (err: any) {
+    if (err.response){
+      toast(err?.response?.data?.message);
+    } else {
+      toast("Invalid API Key or Secret Key");
+    }
     throw err;
   }
 };

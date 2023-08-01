@@ -10,7 +10,7 @@ interface ISellBuy {
   "account-id": string;
 }
 
-const getAllSymbol = (params: any) => {
+const getAllSymbol = (params?: any) => {
   return baseApi({ url: apis.allSymbol, params })
 }
 const getUserInfo = async ({
@@ -24,7 +24,6 @@ const getUserInfo = async ({
   type: string;
   userName: string;
 }) => {
-  console.log("type===========>", AccessKeyId, secretKey, type);
   await baseApi({
     method: "POST",
     url: apis.openOrders,
@@ -36,25 +35,17 @@ const getUserInfo = async ({
   });
 };
 
-const getHistoryOrder = (userKey: any, body: any) => {
-  return baseApi({ url: apis.orderHistory, method: "POST", body: {}, userKey })
+const getHistoryOrder = (params: { body?: any, userInfo: any }) => {
+  return baseApi({ url: apis.orderHistory, method: "POST", body: {}, params: params.userInfo })
 }
-const getOpenOrder = (userKey: any, body: any) => {
-  return baseApi({ url: apis.openOrders, method: "POST", body: {}, userKey })
+const getOpenOrder = (params: { body?: any, userInfo: any }) => {
+  return baseApi({ url: apis.openOrders, method: "POST", body: {}, params: params.userInfo })
 }
 
-const getAccountBalance = ({
-  userId,
-  AccessKeyId,
-  secretKey,
-}: {
-  userId: string;
-  AccessKeyId: string;
-  secretKey: string;
-}) => {
+const getAccountBalance = (params: { body?: any, userInfo: any }) => {
   return baseApi({
-    url: `${apis.accountInfo}/${userId}/balance`,
-    params: { AccessKeyId, secretKey },
+    url: apis.accountInfo,
+    params: params.userInfo
   });
 };
 
@@ -66,26 +57,24 @@ const sellOrder = (params: ISellBuy) => {
   return baseApi({ url: apis.buy, method: "POST", params: { ...params, type: "sell-limit" } });
 };
 
-const sellBatchOrder = (params: ISellBuy[]) => {
-  return baseApi({ url: apis.placeBatchOrder, method: "POST", params });
+const sellBatchOrder = (params: { body: any, userInfo: any }) => {
+  console.log({params})
+  return baseApi({ url: apis.placeBatchOrder, method: "POST", body: params.body, params: params.userInfo });
 };
 
-const cancelOrder = ({ orderId, symbol }: { orderId: string; symbol: string }) => {
+const cancelOrder = (params: { body: any, userInfo: any }) => {
   return baseApi({
-    url: apis.cancel(orderId),
+    url: apis.cancel,
     method: "POST",
-    params: { symbol, "order-id": orderId },
+    body: params.body, params: params.userInfo 
   });
 };
 
-const cancelAllOrder = ({ symbol, userId, size, side, types, AccessKeyId, secretKey }: {
-  symbol: string, userId: string, types: 'sell-limit' | 'buy-limit', side: 'sell' | 'buy', size?: number, AccessKeyId: string;
-  secretKey: string;
-}) => {
+const cancelAllOrder = (params: { body: any, userInfo: any }) => {
   return baseApi({
     url: apis.cancelAllOrder,
     method: "POST",
-    params: { symbol, 'account-id': userId, size, side, types, AccessKeyId, secretKey },
+    body: params.body, params: params.userInfo 
   });
 };
 

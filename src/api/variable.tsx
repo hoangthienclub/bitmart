@@ -4,9 +4,9 @@ const apis = {
   allSymbol: "spot/v1/symbols/details",
   accountInfo: "account/v1/wallet",
   buy: "spot/v2/submit_order",
-  placeBatchOrder: "/v1/order/batch-orders",
-  cancelAllOrder: '/v1/order/orders/batchCancelOpenOrders',
-  cancel: (orderId: string) => `/v1/order/orders/${orderId}/submitcancel`,
+  placeBatchOrder: "spot/v2/batch_orders",
+  cancelAllOrder: 'spot/v1/cancel_orders',
+  cancel: `spot/v3/cancel_order`,
 };
 const method = 'GET';
 

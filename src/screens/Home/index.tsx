@@ -88,10 +88,10 @@ const Home = () => {
     }
   }, [userId]);
 
-  // const { data: userBalance, mutateAsync: getBalanceInfo } = useMutation(
-  //   ["getAccountBalance"],
-  //   API.getAccountBalance
-  // );
+  const { data: userBalance, mutateAsync: getBalanceInfo } = useMutation(
+    ["getAccountBalance"],
+    API.getAccountBalance
+  );
   const { data: a, mutateAsync: getAllSymbol } = useMutation(
     ["getAllSymbol"],
     API.getAllSymbol,
@@ -163,6 +163,7 @@ const Home = () => {
   );
 
   const refetchOrders = () => {
+    console.log("userSelectedInfo:", userSelectedInfo)
     refetchGetOpenOrder();
     refetchGetHistoryOrder();
   };
@@ -236,7 +237,9 @@ const Home = () => {
     ["getHistoryOrder", { userId }],
     () =>
       API.getHistoryOrder({
-        "account-id": userId,
+        userInfo: {
+          AccessKeyId: userSelectedInfo?.AccessKeyId, secretKey: userSelectedInfo?.secretKey, userName: userSelectedInfo?.userName 
+        }
       }),
     {
       enabled: !!userId,
@@ -245,7 +248,11 @@ const Home = () => {
 
   const { data: openOrder, refetch: refetchGetOpenOrder } = useQuery(
     ["getOpenOrder", { userId }],
-    () => API.getOpenOrder({ "account-id": userId }),
+    () => API.getOpenOrder({
+      userInfo: {
+        AccessKeyId: userSelectedInfo?.AccessKeyId, secretKey: userSelectedInfo?.secretKey, userName: userSelectedInfo?.userName 
+      }
+    }),
     { enabled: !!userId }
   );
 
@@ -276,27 +283,31 @@ const Home = () => {
       setInterval(sendPing, 10000);
     };
     ws.onmessage = function (data: any) {
-      const fileReader = new FileReader();
-      fileReader.onload = function (event: any) {
-        const convertedData = event.target.result;
-        const text: any = inflateRaw(convertedData, {
-          to: "string",
-        });
-        const msg: any = JSON.parse(text);
-        if (msg.ping) {
-          ws.send(
-            JSON.stringify({
-              pong: msg.ping,
-            })
-          );
-        } else if (msg.data) {
-          handle(msg);
-        } else {
-          console.log(text);
+      try {
+        const fileReader = new FileReader();
+        fileReader.onload = function (event: any) {
+          const convertedData = event.target.result;
+          const text: any = inflateRaw(convertedData, {
+            to: "string",
+          });
+          const msg: any = JSON.parse(text);
+          if (msg.ping) {
+            ws.send(
+              JSON.stringify({
+                pong: msg.ping,
+              })
+            );
+          } else if (msg.data) {
+            handle(msg);
+          } else {
+            console.log(text);
+          }
+        };
+        if (data?.data) {
+          fileReader.readAsArrayBuffer(data.data);
         }
-      };
-      if (data?.data) {
-        fileReader.readAsArrayBuffer(data.data);
+      } catch (error) {
+        console.log();
       }
     };
     ws.onerror = function error(err: any) {
@@ -404,51 +415,75 @@ const Home = () => {
     const { min, max, amountPerPrice, step } = sellBatchForm;
     
     const userBalances = await getBalanceInfo({
-      userId: userSelectedInfo?.userId,
-      AccessKeyId: userSelectedInfo?.AccessKeyId,
-      secretKey: userSelectedInfo?.secretKey,
+      userInfo: {
+        AccessKeyId: userSelectedInfo?.AccessKeyId, secretKey: userSelectedInfo?.secretKey, userName: userSelectedInfo?.userName 
+      }
     });
-    let userBalance = +userBalances?.data?.data?.list?.find(
+    let userBalance = +userBalances?.data?.data?.wallet?.find(
       (it: any) =>
         it?.currency === selectedSymbol?.["base_currency"]
-    )?.balance || 0;
-  
+    )?.available || 0;
+
     const data = [];
     for (let price = +min; price <= +max;  price += (+step)) {
       if (+userBalance <= +amountPerPrice) break;
       data.push({
         symbol: selectedSymbol?.symbol ?? '',
-        price: floored_val(price, numDecimalDigits),
-        amount: +amountPerPrice,
-        AccessKeyId: userSelectedInfo?.AccessKeyId,
-        secretKey: userSelectedInfo?.secretKey,
-        "account-id": userSelectedInfo?.userId,
-        type: "sell-limit"
+        price: floored_val(price, numDecimalDigits).toString(),
+        size: amountPerPrice.toString(),
+        side: "sell",
+        type: "limit"
       })
       userBalance = +userBalance - (+amountPerPrice);
     } 
     const datas = separatedArray(data, itemsPerBatch);
     await Promise.all(datas.map((item: any) => {
-      _onSellBatchOrder(item);
+      _onSellBatchOrder({
+        body: {
+          order_params: item
+        },
+        userInfo: {
+          AccessKeyId: userSelectedInfo?.AccessKeyId, secretKey: userSelectedInfo?.secretKey, userName: userSelectedInfo?.userName 
+        }
+      });
     }))
     refetchOrders();
   };
 
-  const cancelOrder = (id: string) => {
+  const cancelOrder = (id: string, symbol: string) => {
     _onCancelOrder({
-      symbol: selectedSymbol?.symbol as string,
-      orderId: id,
+      body: {
+        symbol,
+        order_id: id,
+      },
+      userInfo: {
+        AccessKeyId: userSelectedInfo?.AccessKeyId, secretKey: userSelectedInfo?.secretKey, userName: userSelectedInfo?.userName 
+      }
     });
   };
 
   const cancelAllOrder = () => {
+    if (!selectedSymbol) {
+      toast("Please select symbol");
+      return;
+    }
     _onCancelAllOrder({
-      userId: userSelectedInfo?.userId,
-      symbol: selectedSymbol?.symbol ?? '',
-      side: 'sell',
-      types: 'sell-limit',
-      AccessKeyId: userSelectedInfo?.AccessKeyId ?? '',
-      secretKey: userSelectedInfo?.secretKey ?? '' ,
+      body: {
+        symbol: selectedSymbol?.symbol ?? "",
+        side:"buy"
+      },
+      userInfo: {
+        AccessKeyId: userSelectedInfo?.AccessKeyId, secretKey: userSelectedInfo?.secretKey, userName: userSelectedInfo?.userName 
+      }
+    });
+    _onCancelAllOrder({
+      body: {
+        symbol: selectedSymbol?.symbol ?? "",
+        side:"sell"
+      },
+      userInfo: {
+        AccessKeyId: userSelectedInfo?.AccessKeyId, secretKey: userSelectedInfo?.secretKey, userName: userSelectedInfo?.userName 
+      }
     });
   };
 
@@ -462,100 +497,100 @@ const Home = () => {
   
   const onCreateVolume = async () => {
     setCreateVolLoading(true)
-    const { min, max, amount, desiredVolume } = createVolumeForm;
-    const user1=  seller;
-    const user2 = buyer;
+    // const { min, max, amount, desiredVolume } = createVolumeForm;
+    // const user1=  seller;
+    // const user2 = buyer;
     
-    try {
-      let count = 0;
-      while (count < +desiredVolume) {
-        toast(`Count Time : ${count + 1}`)
-        const price = floored_val(
-          Math.random() * (+max - (+min)) + +min,
-          numDecimalDigits,
-        );
+    // try {
+    //   let count = 0;
+    //   while (count < +desiredVolume) {
+    //     toast(`Count Time : ${count + 1}`)
+    //     const price = floored_val(
+    //       Math.random() * (+max - (+min)) + +min,
+    //       numDecimalDigits,
+    //     );
         
-        let amountCoin = floored_val(
-          amount / price, numDecimalDigits)
-        //Step 1 : user1 sells coin
+    //     let amountCoin = floored_val(
+    //       amount / price, numDecimalDigits)
+    //     //Step 1 : user1 sells coin
 
 
-        //  get user1 user information
-        const user1Balances = await getBalanceInfo({
-          userId: user1?.userId,
-          AccessKeyId: user1?.AccessKeyId,
-          secretKey: user1?.secretKey,
-        });
+    //     //  get user1 user information
+    //     const user1Balances = await getBalanceInfo({
+    //       userId: user1?.userId,
+    //       AccessKeyId: user1?.AccessKeyId,
+    //       secretKey: user1?.secretKey,
+    //     });
 
-        const user1Balance = user1Balances?.data?.data?.list?.find(
-          (it: any) =>
-            it?.currency === selectedSymbol?.["base_currency"]
-        );
-          //checking
-        if (+user1Balance?.balance < +amountCoin) {
-          amountCoin = floored_val(+user1Balance?.balance, numDecimalDigits)
-        }
+    //     const user1Balance = user1Balances?.data?.data?.list?.find(
+    //       (it: any) =>
+    //         it?.currency === selectedSymbol?.["base_currency"]
+    //     );
+    //       //checking
+    //     if (+user1Balance?.balance < +amountCoin) {
+    //       amountCoin = floored_val(+user1Balance?.balance, numDecimalDigits)
+    //     }
         
-        await _onSellOrderAsync({
-          "account-id": user1?.userId,
-          price,
-          amount: amountCoin,
-          symbol: selectedSymbol?.symbol ?? "",
-          AccessKeyId: user1?.AccessKeyId,
-          secretKey: user1?.secretKey,
-        });
-        //Step 2 : user2 buys coin
-        await _onBuyOrder({
-          "account-id": user2?.userId,
-          price,
-          amount: amountCoin,
-          symbol: selectedSymbol?.symbol ?? "",
-          AccessKeyId: user2?.AccessKeyId,
-          secretKey: user2?.secretKey,
-        });
-        // Step3 : check user2 balanance
-        await delay(2000);
-        const user2Balances = await getBalanceInfo({
-          userId: user2?.userId,
-          AccessKeyId: user2?.AccessKeyId,
-          secretKey: user2?.secretKey,
-        });
-        const user2Balance = user2Balances?.data?.data?.list?.find(
-          (it: any) =>
-            it?.currency === selectedSymbol?.["base_currency"]
-        );
-        if (+user2Balance?.balance < +amountCoin) {
-          amountCoin = floored_val(+user2Balance?.balance, numDecimalDigits)
-        }
-        //Step 4 : user2 sells coin
-        if (amountCoin <= 0) throw new Error("Insufficient balance");
-        await _onSellOrderAsync({
-          "account-id": user2?.userId,
-          price,
-          amount: amountCoin,
-          symbol: selectedSymbol?.symbol ?? "",
-          AccessKeyId: user2?.AccessKeyId,
-          secretKey: user2?.secretKey,
-        });
-        //Step 5 : user1 buys coin
+    //     await _onSellOrderAsync({
+    //       "account-id": user1?.userId,
+    //       price,
+    //       amount: amountCoin,
+    //       symbol: selectedSymbol?.symbol ?? "",
+    //       AccessKeyId: user1?.AccessKeyId,
+    //       secretKey: user1?.secretKey,
+    //     });
+    //     //Step 2 : user2 buys coin
+    //     await _onBuyOrder({
+    //       "account-id": user2?.userId,
+    //       price,
+    //       amount: amountCoin,
+    //       symbol: selectedSymbol?.symbol ?? "",
+    //       AccessKeyId: user2?.AccessKeyId,
+    //       secretKey: user2?.secretKey,
+    //     });
+    //     // Step3 : check user2 balanance
+    //     await delay(2000);
+    //     const user2Balances = await getBalanceInfo({
+    //       userId: user2?.userId,
+    //       AccessKeyId: user2?.AccessKeyId,
+    //       secretKey: user2?.secretKey,
+    //     });
+    //     const user2Balance = user2Balances?.data?.data?.list?.find(
+    //       (it: any) =>
+    //         it?.currency === selectedSymbol?.["base_currency"]
+    //     );
+    //     if (+user2Balance?.balance < +amountCoin) {
+    //       amountCoin = floored_val(+user2Balance?.balance, numDecimalDigits)
+    //     }
+    //     //Step 4 : user2 sells coin
+    //     if (amountCoin <= 0) throw new Error("Insufficient balance");
+    //     await _onSellOrderAsync({
+    //       "account-id": user2?.userId,
+    //       price,
+    //       amount: amountCoin,
+    //       symbol: selectedSymbol?.symbol ?? "",
+    //       AccessKeyId: user2?.AccessKeyId,
+    //       secretKey: user2?.secretKey,
+    //     });
+    //     //Step 5 : user1 buys coin
 
-        await _onBuyOrder({
-          "account-id": user1?.userId,
-          price,
-          amount: amountCoin,
-          symbol: selectedSymbol?.symbol ?? "",
-          AccessKeyId: user1?.AccessKeyId,
-          secretKey: user1?.secretKey,
-        });
+    //     await _onBuyOrder({
+    //       "account-id": user1?.userId,
+    //       price,
+    //       amount: amountCoin,
+    //       symbol: selectedSymbol?.symbol ?? "",
+    //       AccessKeyId: user1?.AccessKeyId,
+    //       secretKey: user1?.secretKey,
+    //     });
 
-        count++;
-      }
-    } catch (err) {
-      const cancelUser1Order = API.cancelAllOrder({ userId: user1?.userId, symbol: selectedSymbol?.symbol ?? '', size: desiredVolume, side: 'sell', types: 'sell-limit', AccessKeyId: user1?.AccessKeyId ?? '', secretKey: user1?.secretKey ?? '' });
+    //     count++;
+    //   }
+    // } catch (err) {
+    //   const cancelUser1Order = API.cancelAllOrder({ userId: user1?.userId, symbol: selectedSymbol?.symbol ?? '', size: desiredVolume, side: 'sell', types: 'sell-limit', AccessKeyId: user1?.AccessKeyId ?? '', secretKey: user1?.secretKey ?? '' });
 
-      const cancelUser2Order = API.cancelAllOrder({ userId: user2?.userId, symbol: selectedSymbol?.symbol ?? '', size: desiredVolume, side: 'sell', types: 'sell-limit', AccessKeyId: user2?.AccessKeyId ?? '', secretKey: user2?.secretKey ?? '' });
-      await Promise.all([cancelUser1Order, cancelUser2Order])
-    }
+    //   const cancelUser2Order = API.cancelAllOrder({ userId: user2?.userId, symbol: selectedSymbol?.symbol ?? '', size: desiredVolume, side: 'sell', types: 'sell-limit', AccessKeyId: user2?.AccessKeyId ?? '', secretKey: user2?.secretKey ?? '' });
+    //   await Promise.all([cancelUser1Order, cancelUser2Order])
+    // }
   }
 
   const reloadProfile = () => {
