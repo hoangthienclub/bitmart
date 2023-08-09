@@ -145,7 +145,7 @@ const HomeView = ({
             onChange={(e: any) =>
               setCreateVolumeForm({ ...createVolumeForm, desiredVolume: e?.target?.value })
             }
-            label={`Desired Volume ${quoteCurrency}`}
+            label={`Volume`}
           />
           <Input
             value={createVolumeForm?.count}

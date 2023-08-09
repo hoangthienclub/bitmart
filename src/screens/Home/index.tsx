@@ -455,6 +455,10 @@ const Home = () => {
   };
 
   const onCreateVolume = async () => {
+    if (!selectedSymbol) {
+      toast("Please select symbol");
+      return;
+    }
     setCreateVolLoading(true)
     const { min, max, count, desiredVolume } = createVolumeForm;
     const user1 = seller;
