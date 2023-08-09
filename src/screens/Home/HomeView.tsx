@@ -141,16 +141,16 @@ const HomeView = ({
             label="Max"
           />
           <Input
-            value={createVolumeForm?.amount}
-            onChange={(e: any) =>
-              setCreateVolumeForm({ ...createVolumeForm, amount: e?.target?.value })
-            }
-            label={`Amount ${quoteCurrency}`}
-          />
-          <Input
             value={createVolumeForm?.desiredVolume}
             onChange={(e: any) =>
               setCreateVolumeForm({ ...createVolumeForm, desiredVolume: e?.target?.value })
+            }
+            label={`Desired Volume ${quoteCurrency}`}
+          />
+          <Input
+            value={createVolumeForm?.count}
+            onChange={(e: any) =>
+              setCreateVolumeForm({ ...createVolumeForm, count: e?.target?.value })
             }
             label="Count"
           />

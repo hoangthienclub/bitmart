@@ -8,7 +8,7 @@ import variables from "../../api/variable";
 import { inflate } from "pako";
 import { toast } from "react-toastify";
 import allSymbolData from "../../utils/allSymbol";
-import { delay, floored_val, separatedArray } from "../../utils/helper";
+import { delay, floored_val, separatedArray, generateRandomPrices } from "../../utils/helper";
 
 let ws: any;
 let preSymbol: any = null;
@@ -32,7 +32,7 @@ const Home = () => {
   const [userSelectedInfo, setUserSelectedInfo] = useState({ ...defaultUserInfo });
   const [createVolLoading, setCreateVolLoading] = useState(false)
   useEffect(() => {
-    
+
     initSocket();
     getUserInfo();
   }, []);
@@ -57,11 +57,11 @@ const Home = () => {
   const [createVolumeForm, setCreateVolumeForm] = useState({
     min: 0,
     max: 0,
-    amount: 0,
+    count: 0,
     desiredVolume: 0
   });
   const getUserInfo = () => {
-    
+
     const buyer = JSON.parse(sessionStorage.getItem(STORE_KEYS.BUYER) || "{}");
     const seller = JSON.parse(sessionStorage.getItem(STORE_KEYS.SELLER) || "{}");
 
@@ -98,7 +98,7 @@ const Home = () => {
     {
       onSuccess: async (data, params) => {
         // console.log("getUserInfo", params, data);
-        
+
         if (data?.data?.status === "error") {
           toast(data?.data?.["err-msg"]);
         } else {
@@ -146,10 +146,10 @@ const Home = () => {
           // sessionStorage.setItem(STORE_KEYS.secretKey, params?.secretKey);
           // setUserId(data?.data?.data?.[0]?.id);
         }
-        
+
       },
       onError: (err: any) => console.log('onError', err)
-      
+
     }
   );
 
@@ -268,14 +268,14 @@ const Home = () => {
   const onLogout = () => {
     setUserId("");
     sessionStorage.clear();
-    setUserSelectedInfo({...defaultUserInfo });
+    setUserSelectedInfo({ ...defaultUserInfo });
     setBuyer({ ...defaultUserInfo });
     setSeller({ ...defaultUserInfo });
   };
 
   const initSocket = () => {
     ws = new WebSocket(variables.WS_URL);
-    ws.onopen = function open() { console.log("")};
+    ws.onopen = function open() { console.log("") };
     ws.onmessage = function (data: any) {
       const fileReader = new FileReader();
       fileReader.onload = function (event: any) {
@@ -397,7 +397,7 @@ const Home = () => {
       return;
     }
     const { min, max, amountPerPrice, step } = sellBatchForm;
-    
+
     const userBalances = await getBalanceInfo({
       userId: userSelectedInfo?.userId,
       AccessKeyId: userSelectedInfo?.AccessKeyId,
@@ -407,9 +407,9 @@ const Home = () => {
       (it: any) =>
         it?.currency === selectedSymbol?.["base-currency"]
     )?.balance || 0;
-  
+
     const data = [];
-    for (let price = +min; price <= +max;  price += (+step)) {
+    for (let price = +min; price <= +max; price += (+step)) {
       if (+userBalance <= +amountPerPrice) break;
       data.push({
         symbol: selectedSymbol?.symbol ?? '',
@@ -421,7 +421,7 @@ const Home = () => {
         type: "sell-limit"
       })
       userBalance = +userBalance - (+amountPerPrice);
-    } 
+    }
     const datas = separatedArray(data, itemsPerBatch);
     await Promise.all(datas.map((item: any) => {
       _onSellBatchOrder(item);
@@ -443,7 +443,7 @@ const Home = () => {
       side: 'sell',
       types: 'sell-limit',
       AccessKeyId: userSelectedInfo?.AccessKeyId ?? '',
-      secretKey: userSelectedInfo?.secretKey ?? '' ,
+      secretKey: userSelectedInfo?.secretKey ?? '',
     });
   };
 
@@ -453,47 +453,26 @@ const Home = () => {
     setUserId(userInfo?.userId);
     setUserSelectedInfo(userInfo)
   };
-  
+
   const onCreateVolume = async () => {
     setCreateVolLoading(true)
-    const { min, max, amount, desiredVolume } = createVolumeForm;
-    const user1=  seller;
+    const { min, max, count, desiredVolume } = createVolumeForm;
+    const user1 = seller;
     const user2 = buyer;
-    
+
+    const prices = generateRandomPrices({
+      minPrice: +min,
+      maxPrice: +max,
+      count: +count,
+      desiredVolume: +desiredVolume,
+      numDecimalDigits,
+    })
     try {
-      let count = 0;
-      while (count < +desiredVolume) {
-        toast(`Count Time : ${count + 1}`)
-        const price = floored_val(
-          Math.random() * (+max - (+min)) + +min,
-          numDecimalDigits,
-        );
-        
-        let amountCoin = floored_val(
-          amount / price, numDecimalDigits)
-        //Step 1 : user1 sells coin
-
-
-        //  get user1 user information
-        const user1Balances = await getBalanceInfo({
-          userId: user1?.userId,
-          AccessKeyId: user1?.AccessKeyId,
-          secretKey: user1?.secretKey,
-        });
-
-        const user1Balance = user1Balances?.data?.data?.list?.find(
-          (it: any) =>
-            it?.currency === selectedSymbol?.["base-currency"]
-        );
-          //checking
-        if (+user1Balance?.balance < +amountCoin) {
-          amountCoin = floored_val(+user1Balance?.balance, numDecimalDigits)
-        }
-        
+      for await (const item of prices) {
         await _onSellOrderAsync({
           "account-id": user1?.userId,
-          price,
-          amount: amountCoin,
+          price: item.price,
+          amount: item.volume,
           symbol: selectedSymbol?.symbol ?? "",
           AccessKeyId: user1?.AccessKeyId,
           secretKey: user1?.secretKey,
@@ -501,32 +480,19 @@ const Home = () => {
         //Step 2 : user2 buys coin
         await _onBuyOrder({
           "account-id": user2?.userId,
-          price,
-          amount: amountCoin,
+          price: item.price,
+          amount: item.volume,
           symbol: selectedSymbol?.symbol ?? "",
           AccessKeyId: user2?.AccessKeyId,
           secretKey: user2?.secretKey,
         });
-        // Step3 : check user2 balanance
+
         await delay(2000);
-        const user2Balances = await getBalanceInfo({
-          userId: user2?.userId,
-          AccessKeyId: user2?.AccessKeyId,
-          secretKey: user2?.secretKey,
-        });
-        const user2Balance = user2Balances?.data?.data?.list?.find(
-          (it: any) =>
-            it?.currency === selectedSymbol?.["base-currency"]
-        );
-        if (+user2Balance?.balance < +amountCoin) {
-          amountCoin = floored_val(+user2Balance?.balance, numDecimalDigits)
-        }
-        //Step 4 : user2 sells coin
-        if (amountCoin <= 0) throw new Error("Insufficient balance");
+
         await _onSellOrderAsync({
           "account-id": user2?.userId,
-          price,
-          amount: amountCoin,
+          price: item.price,
+          amount: item.volume,
           symbol: selectedSymbol?.symbol ?? "",
           AccessKeyId: user2?.AccessKeyId,
           secretKey: user2?.secretKey,
@@ -535,14 +501,12 @@ const Home = () => {
 
         await _onBuyOrder({
           "account-id": user1?.userId,
-          price,
-          amount: amountCoin,
+          price: item.price,
+          amount: item.volume,
           symbol: selectedSymbol?.symbol ?? "",
           AccessKeyId: user1?.AccessKeyId,
           secretKey: user1?.secretKey,
         });
-
-        count++;
       }
     } catch (err) {
       const cancelUser1Order = API.cancelAllOrder({ userId: user1?.userId, symbol: selectedSymbol?.symbol ?? '', size: desiredVolume, side: 'sell', types: 'sell-limit', AccessKeyId: user1?.AccessKeyId ?? '', secretKey: user1?.secretKey ?? '' });
@@ -559,7 +523,7 @@ const Home = () => {
     if (seller?.userId) {
       _onLogin({ AccessKeyId: seller?.AccessKeyId, secretKey: seller?.secretKey, type: "seller" });
     }
-    if(userSelectedInfo?.userId){
+    if (userSelectedInfo?.userId) {
       refetchOrders();
     }
   };
@@ -588,7 +552,7 @@ const Home = () => {
     );
 
   }
-  
+
   return (
     <HomeView
       {...{
