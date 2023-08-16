@@ -53,6 +53,21 @@ const getAccountBalance = ({
   });
 };
 
+const getOrderInfo = ({
+  AccessKeyId,
+  secretKey,
+  orderId,
+}: {
+  AccessKeyId: string;
+  secretKey: string;
+  orderId: string,
+}) => {
+  return baseApi({
+    url: apis.orderInfo(orderId),
+    params: { AccessKeyId, secretKey },
+  });
+};
+
 const buyOrder = (params: ISellBuy) => {
   return baseApi({ url: apis.buy, method: "POST", params: { ...params, type: "buy-limit" } });
 };
@@ -96,6 +111,7 @@ const API = {
   cancelOrder,
   cancelAllOrder,
   sellBatchOrder,
+  getOrderInfo,
 }
 
 export default API
