@@ -499,7 +499,7 @@ const Home = () => {
         AccessKeyId: userSelectedInfo?.AccessKeyId,
         secretKey: userSelectedInfo?.secretKey,
       });
-      console.log({data})
+      console.log({ data })
       const hasOpenOrder: boolean = data?.data?.data?.length === 0;
       console.log(hasOpenOrder)
 
@@ -513,7 +513,7 @@ const Home = () => {
         console.log('Timeout reached');
         return false;
       }
-      console.log({retries})
+      console.log({ retries })
       retries++;
     }
     console.log('Maximum retries reached');
@@ -530,117 +530,120 @@ const Home = () => {
     maxPrice = +maxPrice;
     desiredAmount = +desiredAmount;
     count = +count;
-    
+
     const user1 = seller;
     const user2 = buyer;
 
     let currentAmount = 0;
     try {
       for (let i = 0; i < count; i++) {
-        console.log({i})
+        console.log({ i })
         const maxAmount = Math.min(desiredAmount / count);
         const minAmount = Math.max(desiredAmount / (count + 1));
 
-        const amount = generateRandomPrice(minAmount, maxAmount);
-        console.log({amount, minAmount, maxAmount})
-        if (amount < 10) {
+        const amount1 = generateRandomPrice(minAmount, maxAmount);
+        console.log({ amount1, minAmount, maxAmount })
+        if (amount1 < 10) {
           break;
         }
 
         const price = generateRandomPrice(minPrice, maxPrice);
-        const volume = +(amount / price).toFixed(4);
+        const volume1 = +(amount1 / price).toFixed(4);
 
-        currentAmount += amount;
+        currentAmount += amount1;
         if (currentAmount >= desiredAmount) {
           break;
         }
 
-        // get coin account1
-        let accountBalanceUser1 = await getUserBalance(user1, 'sell');
-        console.log({ accountBalanceUser1 })
-        if (accountBalanceUser1 < volume) {
+        // get coin account1 and get money account2
+        let [ accountBalanceUser1, accountBalanceUser2 ]  = await Promise.all([
+          await getUserBalance(user1, 'sell'),
+          await getUserBalance(user2, "buy"),
+        ])
+        console.log({ accountBalanceUser1, accountBalanceUser2 })
+        if (accountBalanceUser1 < volume1 || accountBalanceUser2 < amount1) {
           break;
         }
+
+        Promise.all([
         // account1 sell
-        await _onSellOrderAsync({
-          "account-id": user1?.userId,
-          price,
-          amount: volume,
-          symbol: selectedSymbol?.symbol ?? "",
-          AccessKeyId: user1?.AccessKeyId,
-          secretKey: user1?.secretKey,
-        });
-        const checkSellUser1 = await retryCheckOpenOrders(user1, 5, 5);
-        if (!checkSellUser1) {
-          break;
-        }
-
-        // get money account2
-        let accountBalanceUser2 = await getUserBalance(user2, "buy");
-        console.log({ accountBalanceUser2 })
-        if (accountBalanceUser2 < amount) {
-          break;
-        }
-        // account2 buy
-        await _onBuyOrderAsync({
-          "account-id": user2?.userId,
-          price,
-          amount: volume,
-          symbol: selectedSymbol?.symbol ?? "",
-          AccessKeyId: user2?.AccessKeyId,
-          secretKey: user2?.secretKey,
-        });
+          await _onSellOrderAsync({
+            "account-id": user1?.userId,
+            price,
+            amount: volume1,
+            symbol: selectedSymbol?.symbol ?? "",
+            AccessKeyId: user1?.AccessKeyId,
+            secretKey: user1?.secretKey,
+          }),
+          // account2 buy
+          await _onBuyOrderAsync({
+            "account-id": user2?.userId,
+            price,
+            amount: volume1,
+            symbol: selectedSymbol?.symbol ?? "",
+            AccessKeyId: user2?.AccessKeyId,
+            secretKey: user2?.secretKey,
+          }),
+        ])
         await delay(2000);
-        const checkBuyUser2 = await retryCheckOpenOrders(user2, 5, 5);
-        if (!checkBuyUser2) {
+        
+        const [checkSellUser1, checkBuyUser2] = await Promise.all([
+          await retryCheckOpenOrders(user1, 5, 5),
+          await retryCheckOpenOrders(user2, 5, 5)
+        ])
+        if (!checkSellUser1 || !checkBuyUser2) {
           break;
         }
 
         // ====================
         // ====================
 
+        const amount2 = Math.min(accountBalanceUser2, maxAmount);
+        const volume2 = +(amount2 / price).toFixed(4);
+        console.log({ volume2, accountBalanceUser2, maxAmount });
+  
+        [ accountBalanceUser1, accountBalanceUser2 ]  = await Promise.all([
+          await getUserBalance(user1, 'buy'),
+          await getUserBalance(user2, "sell"),
+        ])
 
         // get coin account2
-        accountBalanceUser2 = await getUserBalance(user2, "sell");
-        if (accountBalanceUser2 < volume) {
-            break;
-        }
-        // account2 sell
-        await _onSellOrderAsync({
-          "account-id": user2?.userId,
-          price,
-          amount: volume,
-          symbol: selectedSymbol?.symbol ?? "",
-          AccessKeyId: user2?.AccessKeyId,
-          secretKey: user2?.secretKey,
-        });
-        await delay(2000);
-        const checkSellUser2 = await retryCheckOpenOrders(user2, 5, 5);
-        if (!checkSellUser2) {
+        if (accountBalanceUser2 < volume2 || accountBalanceUser1 < amount2) {
           break;
         }
 
-        // account1 buy
-        // get money account1
-        accountBalanceUser1 = await getUserBalance(user1, "buy");
-        if (accountBalanceUser1 < amount) {
-            break;
-        }
-        // account1 buy
-        await _onBuyOrderAsync({
-          "account-id": user1?.userId,
-          price,
-          amount: volume,
-          symbol: selectedSymbol?.symbol ?? "",
-          AccessKeyId: user1?.AccessKeyId,
-          secretKey: user1?.secretKey,
-        });
-        await delay(2000);
-        const checkBuyUser1 = await retryCheckOpenOrders(user1, 5, 5);
-        if (!checkBuyUser1) {
-          break;
-        }
+        Promise.all([
+          // account1 sell
+          await _onSellOrderAsync({
+            "account-id": user2?.userId,
+            price,
+            amount: volume2,
+            symbol: selectedSymbol?.symbol ?? "",
+            AccessKeyId: user2?.AccessKeyId,
+            secretKey: user2?.secretKey,
+          }),
+           // account1 buy
+          await _onBuyOrderAsync({
+            "account-id": user1?.userId,
+            price,
+            amount: volume2,
+            symbol: selectedSymbol?.symbol ?? "",
+            AccessKeyId: user1?.AccessKeyId,
+            secretKey: user1?.secretKey,
+          }),
+        ])
+        // account2 sell
+
+        // const [checkSellUser2, checkBuyUser1] = await Promise.all([
+        //   await retryCheckOpenOrders(user1, 5, 5),
+        //   await retryCheckOpenOrders(user2, 5, 5)
+        // ])
+        // if (!checkSellUser2 || !checkBuyUser1) {
+        //   break;
+        // }
+        toast(`Total volume: ${currentAmount.toFixed(4)}`);
       }
+      toast("Create volume successfully");
     } catch (err) {
       const cancelUser1Order = API.cancelAllOrder({ userId: user1?.userId, symbol: selectedSymbol?.symbol ?? '', size: desiredAmount, side: 'sell', types: 'sell-limit', AccessKeyId: user1?.AccessKeyId ?? '', secretKey: user1?.secretKey ?? '' });
 
